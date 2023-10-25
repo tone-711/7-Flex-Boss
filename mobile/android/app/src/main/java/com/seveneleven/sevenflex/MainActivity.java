@@ -1,4 +1,4 @@
-package com.711.sevenflex;
+package com.seveneleven.sevenflex;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;

@@ -73,9 +73,9 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "com.711.sevenflex"
+    namespace "com.seveneleven.sevenflex"
     defaultConfig {
-        applicationId "com.711.sevenflex"
+        applicationId "com.seveneleven.sevenflex"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

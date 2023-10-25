@@ -449,7 +449,7 @@
 					"-lc++",
 					"$(inherited)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.711.sevenflex;
+				PRODUCT_BUNDLE_IDENTIFIER = com.seveneleven.sevenflex;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SevenFlex.app/SevenFlex";
 			};
@@ -473,7 +473,7 @@
 					"-lc++",
 					"$(inherited)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.711.sevenflex;
+				PRODUCT_BUNDLE_IDENTIFIER = com.seveneleven.sevenflex;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SevenFlex.app/SevenFlex";
 			};
@@ -486,6 +486,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YW5G75NZZW;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = SevenFlex/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Seven Flex";
@@ -499,7 +500,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.711.sevenflex;
+				PRODUCT_BUNDLE_IDENTIFIER = com.seveneleven.sevenflex;
 				PRODUCT_NAME = SevenFlex;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -514,6 +515,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YW5G75NZZW;
 				INFOPLIST_FILE = SevenFlex/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Seven Flex";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -526,7 +528,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.711.sevenflex;
+				PRODUCT_BUNDLE_IDENTIFIER = com.seveneleven.sevenflex;
 				PRODUCT_NAME = SevenFlex;
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";

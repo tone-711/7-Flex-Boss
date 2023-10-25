@@ -1,4 +1,4 @@
-package com.711.sevenflex;
+package com.seveneleven.sevenflex;
 
 import android.app.Application;
 import com.facebook.react.PackageList;
