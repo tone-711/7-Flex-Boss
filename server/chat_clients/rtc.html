@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebRTC chat</title>
+    <style>
+      body {
+        margin: 0;
+        padding-bottom: 3rem;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+      }
+
+      #form {
+        background: rgba(0, 0, 0, 0.15);
+        padding: 0.25rem;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        height: 3rem;
+        box-sizing: border-box;
+        backdrop-filter: blur(10px);
+      }
+      #input {
+        border: none;
+        padding: 0 1rem;
+        flex-grow: 1;
+        border-radius: 2rem;
+        margin: 0.25rem;
+      }
+      #input:focus {
+        outline: none;
+      }
+      #form > button {
+        background: #333;
+        border: none;
+        padding: 0 1rem;
+        margin: 0.25rem;
+        border-radius: 3px;
+        outline: none;
+        color: #fff;
+      }
+
+      #messages {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+      }
+      #messages > li {
+        padding: 0.5rem 1rem;
+      }
+      #messages > li:nth-child(odd) {
+        background: #efefef;
+      }
+    </style>
+  </head>
+  <body>
+    <label for="users">Choose a user:</label>
+    <select name="users" id="users"></select
+    ><span
+      ><button id="connectBtn" type="button" onclick="connectToUser()">
+        Connect
+      </button></span
+    >
+    <ul id="messages"></ul>
+    <form id="form" action="">
+      <input id="input" autocomplete="off" /><button>Send</button>
+    </form>
+    <script src="https://assisted-sco-signaling-iort.onrender.com/socket.io/socket.io.js"></script>
+    <!-- <script src="http://localhost:3000/socket.io/socket.io.js"></script> -->
+
+    <script>
+      var socket = io("https://assisted-sco-signaling-iort.onrender.com");
+      // var socket = io("http://localhost:3000");
+
+      var messages = document.getElementById("messages");
+      var users = document.getElementById("users");
+      var form = document.getElementById("form");
+      var input = document.getElementById("input");
+      var remoteUserId = "";
+      var PeerConnection = new RTCPeerConnection({
+        iceServers: [
+          { urls: ["stun:us-turn5.xirsys.com"] },
+          {
+            username:
+              "iR5GgTt2P_4v4FNRuxJN6W81_lrSMsbC1CC7YEUhrf0B1g1GxAQEursltCOkgLubAAAAAGUN5ld0b25lLTcxMQ==",
+            credential: "8393188e-597b-11ee-b782-0242ac140004",
+            urls: [
+              "turn:us-turn5.xirsys.com:80?transport=udp",
+              "turn:us-turn5.xirsys.com:3478?transport=udp",
+              "turn:us-turn5.xirsys.com:80?transport=tcp",
+              "turn:us-turn5.xirsys.com:3478?transport=tcp",
+              "turns:us-turn5.xirsys.com:443?transport=tcp",
+              "turns:us-turn5.xirsys.com:5349?transport=tcp",
+            ],
+          },
+        ],
+      });
+
+      PeerConnection.onicecandidate = (e) => {
+        console.log("ice");
+        if (e.candidate) {
+          socket.emit("rtc ice exchange", {
+            id: remoteUserId,
+            ice: e.candidate,
+          });
+        }
+      };
+      PeerConnection.ondatachannel = (evt) => {
+        console.log("ondatachannel", evt);
+        sendChannel = evt.channel;
+        sendChannel.onmessage = handleReceiveMessage;
+        sendChannel.onopen = handleSendChannelStatusChange;
+        sendChannel.onclose = handleSendChannelStatusChange;
+      };
+
+      // Functions
+
+      socket.on("rtc connect handshake", (id) => {
+        remoteUserId = id;
+        document
+          .getElementById("connectBtn")
+          .setAttribute("disabled", "disabled");
+      });
+
+      // Set things up, connect event listeners, etc.
+
+      function connectToUser() {
+        socket.emit("rtc connect handshake", users.value);
+        remoteUserId = users.value;
+
+        sendChannel = PeerConnection.createDataChannel("sendChannel");
+        sendChannel.onopen = handleSendChannelStatusChange;
+        sendChannel.onclose = handleSendChannelStatusChange;
+        sendChannel.onmessage = handleReceiveMessage;
+
+        document
+          .getElementById("connectBtn")
+          .setAttribute("disabled", "disabled");
+
+        PeerConnection.createOffer().then((offer) => {
+          PeerConnection.setLocalDescription(offer).then(() =>
+            socket.emit("rtc send offer", {
+              id: remoteUserId,
+              offer: offer,
+            })
+          );
+        });
+      }
+
+      // Handle errors attempting to create a description;
+      // this can happen both when creating an offer and when
+      // creating an answer. In this simple example, we handle
+      // both the same way.
+
+      function handleCreateDescriptionError(error) {
+        console.log("Unable to create an offer: " + error.toString());
+      }
+
+      // Handle successful addition of the ICE candidate
+      // on the "local" end of the connection.
+
+      function handleLocalAddCandidateSuccess() {
+        console.log("handleLocalAddCandidateSuccess");
+      }
+
+      // Handle successful addition of the ICE candidate
+      // on the "remote" end of the connection.
+
+      function handleRemoteAddCandidateSuccess() {
+        console.log("handleRemoteAddCandidateSuccess");
+      }
+
+      // Handle an error that occurs during addition of ICE candidate.
+
+      function handleAddCandidateError(e) {
+        console.log("Oh noes! addICECandidate failed!", e);
+      }
+
+      // Handles clicks on the "Send" button by transmitting
+      // a message to the remote peer.
+
+      function sendMessage() {
+        var message = messageInputBox.value;
+        sendChannel.sendMessage(message);
+
+        // Clear the input box and re-focus it, so that we're
+        // ready for the next message.
+
+        messageInputBox.value = "";
+        messageInputBox.focus();
+      }
+
+      // Handle status changes on the local end of the data
+      // channel; this is the end doing the sending of data
+      // in this example.
+
+      function handleSendChannelStatusChange(event) {
+        if (sendChannel) {
+          var state = sendChannel.readyState;
+
+          console.log("handleSendChannelStatusChange", state);
+        }
+      }
+
+      function handleReceiveMessage(event) {
+        var item = document.createElement("li");
+        item.textContent = `Them: ${event.data}`;
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      }
+      // Handle status changes on the receiver's channel.
+
+      function handleReceiveChannelStatusChange(event) {
+        if (receiveChannel) {
+          console.log(
+            "Receive channel's status has changed to " +
+              receiveChannel.readyState
+          );
+        }
+
+        // Here you would do stuff that needs to be done
+        // when the channel's status changes.
+      }
+
+      // Close the connection, including data channels if they're open.
+      // Also update the UI to reflect the disconnected status.
+
+      function disconnectPeers() {
+        // Close the RTCsendChannels if they're open.
+
+        console.log("disconnectPeers");
+
+        sendChannel.close();
+        receiveChannel.close();
+
+        // Close the RTCPeerConnections
+
+        localConnection.close();
+        remoteConnection.close();
+      }
+
+      // Set up an event listener which will run the startup
+      // function once the page is done loading.
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (input.value) {
+          //socket.emit("chat message", input.value);
+          try {
+            console.log("send", input.value);
+            var item = document.createElement("li");
+            item.textContent = `You: ${input.value}`;
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+            sendChannel.send(input.value);
+          } catch (e) {
+            console.log(e);
+          }
+          input.value = "";
+        }
+      });
+
+      socket.on("connect", () => {
+        socket.emit("join channel", "rtc");
+      });
+
+      socket.on("connected rtc users", function (msg) {
+        console.log("connected rtc users", msg);
+        users.innerHTML = "";
+        var newUserList = msg.filter((x) => x !== socket.id);
+        newUserList.forEach((el) => {
+          var item = document.createElement("option");
+          item.value = el;
+          item.textContent = el;
+          users.appendChild(item);
+        });
+      });
+
+      socket.on("rtc ice exchange", (ice) => {
+        console.log("rtc ice exchange", ice);
+        PeerConnection.addIceCandidate(ice).catch(handleAddCandidateError);
+      });
+
+      socket.on("rtc receive offer", (offer) => {
+        PeerConnection.setRemoteDescription(offer)
+          .then(() => PeerConnection.createAnswer())
+          .then((answer) => {
+            PeerConnection.setLocalDescription(answer);
+            socket.emit("rtc send answer", {
+              id: remoteUserId,
+              answer: answer,
+            });
+          });
+      });
+
+      socket.on("rtc receive answer", (answer) => {
+        console.log("rtc receive answer", answer);
+        PeerConnection.setRemoteDescription(answer);
+      });
+
+      socket.on("disconnect", (reason) => {
+        if (reason === "io server disconnect") {
+          // the disconnection was initiated by the server, you need to reconnect manually
+          socket.connect();
+        }
+        // else the socket will automatically try to reconnect
+      });
+    </script>
+  </body>
+</html>

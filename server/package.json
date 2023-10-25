@@ -1,17 +1,19 @@
 {
-  "name": "express-hello-world",
+  "name": "Assisted_SCO_Signaling_Server",
   "version": "1.0.0",
-  "description": "Express Hello World on Render",
-  "main": "app.js",
-  "repository": "https://github.com/render-examples/express-hello-world",
-  "author": "Render Developers",
+  "main": "index.js",
+  "author": "Tone T. Thangsongcharoen <tone.thangsongcharoen@7-11.com>",
   "license": "MIT",
-  "private": false,
+  "type": "module",
   "scripts": {
-    "start": "node app.js"
+    "start": "node index.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "@node-redis/json": "^1.0.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "redis": "^4.6.8",
+    "socket.io": "^4.7.2"
   },
   "engines": {
     "node": ">=14"
