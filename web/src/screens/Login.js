@@ -2,8 +2,10 @@ import '../style.css';
 import { Link } from "wouter";
 import Button from '@mui/material/Button';
 import { TextField } from '@mui/material';
+import { useLocation } from 'wouter';
 
 export default function Login() {
+  const {navigate} = useLocation();
 
 return (
     <div className='Container'>
@@ -20,7 +22,7 @@ return (
             >Login</Button>
 
     <Link href="/Register">
-       <a className="link">Profile</a>
+       <a className="link" onClick={() => navigate('/register')}>Profile</a>
      </Link>
            
         </div>
