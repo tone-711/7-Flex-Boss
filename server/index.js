@@ -205,7 +205,7 @@ io.on("connection", async (socket) => {
         $set: {
           storeId: storeId,
           address: address,
-          latlng: latlng
+          latlng: latlng.results[0].location
         },
       };
       const options = { upsert: true };
