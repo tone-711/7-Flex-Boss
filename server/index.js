@@ -117,7 +117,7 @@ io.on("connection", async (socket) => {
         const token = await jwt.sign(
           { username: username },
           process.env.JWT_SECRET,
-          { algorithm: "RS256", expiresIn: "12h" }
+          { expiresIn: "12h" }
         );
 
         const query = { username: username };
