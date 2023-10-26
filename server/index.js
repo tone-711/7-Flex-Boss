@@ -1,14 +1,44 @@
 import { createServer } from "http";
+import crypto from "crypto";
 import express from "express";
 import cors from "cors";
 import { Server } from "socket.io";
-import path from "path";
-import { fileURLToPath } from "url";
-import redis from "redis";
+import { MongoClient, ServerApiVersion } from "mongodb";
+import "dotenv/config";
 
-const __filename = fileURLToPath(import.meta.url);
+async function HashPW(password) {
+  return new Promise((resolve, reject) => {
+      // generate random 16 bytes long salt
+      const salt = crypto.randomBytes(16).toString("hex")
 
-const __dirname = path.dirname(__filename);
+      crypto.scrypt(password, salt, 64, (err, derivedKey) => {
+          if (err) reject(err);
+          resolve(salt + ":" + derivedKey.toString('hex'))
+      });
+  })
+}
+
+async function VerifyPW(password, hash) {
+  return new Promise((resolve, reject) => {
+      const [salt, key] = hash.split(":")
+      crypto.scrypt(password, salt, 64, (err, derivedKey) => {
+          if (err) reject(err);
+          resolve(key == derivedKey.toString('hex'))
+      });
+  })
+}
+
+// Replace the placeholder with your Atlas connection string
+const uri = process.env.MONGODB_URL;
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
+});
+const DB = client.db("7FlexDB");
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -28,60 +58,71 @@ httpServer.listen(port, () => {
   console.log(`listening on *:${port}`);
 });
 
-let redisClient;
-
-(async () => {
-  redisClient = redis.createClient({
-    password: "33Zw3h6vOwQmdHdAqPW0OXXaM1d348DU",
-    socket: {
-      host: "redis-12974.c309.us-east-2-1.ec2.cloud.redislabs.com",
-      port: 12974,
-    },
-  });
-
-  redisClient.on("error", (error) => console.error(`Redis Error : ${error}`));
-
-  await redisClient.connect();
-
-  await redisClient.flushAll("ASYNC");
-
-  await redisClient.json.set("users", "$", {
-    connected: [],
-    connected_Index: [],
-    connectedRtc: [],
-    connectedRtc_Index: [],
-  });
-})();
-
 app.get("/", (req, res) => res.type("html").send(html));
-app.get("/agent", (req, res) =>
-  res.type("html").sendFile(path.join(__dirname, "/chat_clients/agent.html"))
-);
-app.get("/customer", (req, res) =>
-  res.type("html").sendFile(path.join(__dirname, "/chat_clients/customer.html"))
-);
-app.get("/rtc", (req, res) =>
-  res.type("html").sendFile(path.join(__dirname, "/chat_clients/rtc.html"))
-);
 
 io.on("connection", async (socket) => {
   console.log("a user connected");
+  4;
+  socket.on(
+    "register user",
+    async ({ username, password, employeeId, email, mobilePhone }) => {
 
-  await redisClient.json.arrAppend("users", "$.connected", {
-    id: socket.id,
-    lastConnected: new Date(),
-  });
+        const hash = await HashPW(password);
+        const user = myDB.collection("user");
 
-  await redisClient.json.arrAppend("users", "$.connected_Index", socket.id);
+        const query = { username: username };
+        const update = {
+          $set: {
+            username: username,
+            password: hash,
+            employeeId: employeeId,
+            email: email,
+            mobilePhone: mobilePhone,
+          },
+        };
+        const options = { upsert: true };
+        const result = await user.updateOne(query, update, options);
 
-  const connectedUsers = await redisClient.json.get("users", {
-    path: ["$.connected[*].id"],
-  });
+        if (result.insertedId) {
+          socket
+            .to(socket.id)
+            .emit("register user response", { success: true, msg: "user registered" });
+        } else {
+          socket
+            .to(socket.id)
+            .emit("register user response", { success: true, msg: "user exists" });
+        }
+    }
+  );
 
-  io.emit("connected users", connectedUsers);
+  socket.on("login", async ({username, password}) => {
+    // send a private message to the socket with the given it
 
-  socket.on("join channel", async (channelName) => {
-    // send a private message to the socket with the given id
+    const user = myDB.collection("user");
+
+    const curUser = await user.findOne({username: username});
+
+    if (curUser) {
+      const checkPW = await VerifyPW(password, curUser.password);
+
+      if (checkPW === true) {
+
+        const token = await jwt.sign({ username: username }, process.env.JWT_SECRET, { algorithm: 'RS256', expiresIn: '12h' });
+
+        socket
+            .to(socket.id)
+            .emit("login response", { success: true, token: token });
+      } else {
+        socket
+        .to(socket.id)
+        .emit("login response", { success: false });
+      }
+    } else {
+      socket
+        .to(socket.id)
+        .emit("login response", { success: false });
+    }
+
     console.log("join channel", channelName);
     socket.join(channelName);
 
@@ -104,56 +145,6 @@ io.on("connection", async (socket) => {
     }
   });
 
-  // socket.on("edit ice candidates", async (iceCandidates) => {
-  //   const rtcUser = { id: socket.id, ice: iceCandidates };
-
-  //   const iceIndex = await redisClient.json.arrIndex(
-  //     "users",
-  //     "$..connectedRtc_Index",
-  //     socket.id
-  //   );
-  //   console.log("Existing Ice User Found", iceIndex[0]);
-
-  //   if (iceIndex[0] >= 0) {
-  //     await redisClient.json.arrPop("users", "$.connectedRtc", iceIndex[0]);
-  //     await redisClient.json.arrPop(
-  //       "users",
-  //       "$.connectedRtc_Index",
-  //       iceIndex[0]
-  //     );
-  //   }
-
-  //   await redisClient.json.arrAppend("users", "$.connectedRtc", rtcUser);
-
-  //   await redisClient.json.arrAppend(
-  //     "users",
-  //     "$.connectedRtc_Index",
-  //     socket.id
-  //   );
-
-  //   const connectedRtcUsers = await redisClient.json.get("users", {
-  //     path: ["$.connectedRtc[*].id"],
-  //   });
-
-  //   io.emit("connected rtc users", connectedRtcUsers);
-  // });
-
-  socket.on("rtc ice exchange", async (obj) => {
-    io.to(obj.id).emit("rtc ice exchange", obj.ice);
-  });
-
-  socket.on("rtc connect handshake", (id) => {
-    io.to(id).emit("rtc connect handshake", socket.id);
-  });
-
-  socket.on("rtc send offer", (obj) => {
-    console.log("rtc receive offer", obj);
-    io.to(obj.id).emit("rtc receive offer", obj.offer);
-  });
-
-  socket.on("rtc send answer", (obj) => {
-    io.to(obj.id).emit("rtc receive answer", obj.answer);
-  });
 
   socket.on("chat message", (msg) => {
     console.log("message: " + msg);
@@ -184,42 +175,9 @@ io.on("connection", async (socket) => {
   socket.on("disconnect", async (reason) => {
     //await redisClient.del(socket.id);
 
-    const index = await redisClient.json.arrIndex(
-      "users",
-      "$..connected_Index",
-      socket.id
-    );
-    console.log("a user disconnected index", index[0]);
+  
 
-    const iceIndex = await redisClient.json.arrIndex(
-      "users",
-      "$..connectedRtc_Index",
-      socket.id
-    );
-    console.log("Existing Ice User Found", iceIndex[0]);
-
-    if (iceIndex[0] >= 0) {
-      await redisClient.json.arrPop("users", "$.connectedRtc", iceIndex[0]);
-      await redisClient.json.arrPop(
-        "users",
-        "$.connectedRtc_Index",
-        iceIndex[0]
-      );
-      const connectedRtcUsers = await redisClient.json.get("users", {
-        path: ["$.connectedRtc[*].id"],
-      });
-
-      io.emit("connected rtc users", connectedRtcUsers);
-    }
-
-    await redisClient.json.arrPop("users", "$.connected", index[0]);
-    await redisClient.json.arrPop("users", "$.connected_Index", index[0]);
-
-    const connectedUsers = await redisClient.json.get("users", {
-      path: ["$.connected[*].id"],
-    });
-
-    io.emit("connected users", connectedUsers);
+   // io.emit("connected users", connectedUsers);
     console.log("a user disconnected", socket.id);
   });
 
@@ -233,7 +191,7 @@ const html = `
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hello from Render!</title>
+    <title>Hello from 7-Flex!</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script>
       setTimeout(() => {
@@ -274,7 +232,7 @@ const html = `
   </head>
   <body>
     <section>
-      Welcome to 7-11's Signaling Test Server!
+      Welcome to the 7-Flex Server!
     </section>
   </body>
 </html>
