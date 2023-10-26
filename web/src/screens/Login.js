@@ -1,4 +1,4 @@
-import './style.css';
+import '../style.css';
 import { Link } from "wouter";
 import Button from '@mui/material/Button';
 import { TextField } from '@mui/material';
