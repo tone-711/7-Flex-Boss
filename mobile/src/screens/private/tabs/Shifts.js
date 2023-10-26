@@ -1,14 +1,15 @@
 import React from 'react';
-import {Text, Button} from 'react-native-paper';
+import {Button} from 'react-native-paper';
 import {MemoContext} from '../../../services/MainMemo';
 import { useNavigation } from '@react-navigation/native';
+import AvailableShifts from '../../AvailableShifts';
 
 const Shifts = props => {
   const navigation = useNavigation();
   const {logout} = React.useContext(MemoContext);
   return (
     <>
-      <Text style={{color: 'white'}}>Shifts</Text>
+    <AvailableShifts/>
       <Button
         style={{margin: 10}}
         icon="logout"
