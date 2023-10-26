@@ -196,7 +196,17 @@ io.on("connection", async (socket) => {
     //await redisClient.del(socket.id);
 
     // io.emit("connected users", connectedUsers);
-    console.log("a user disconnected", socket.id);
+    const user = myDB.collection("user");
+
+    const query = { socket: socket.id };
+    const update = {
+      $set: {
+        socket: null,
+      },
+    };
+    const result = await user.updateOne(query, update);
+
+    console.log("a user disconnected", socket.id, result);
   });
 
   // socket.on("say to someone", (id, msg) => {
