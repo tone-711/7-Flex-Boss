@@ -1,75 +1,39 @@
 import * as React from "react";
-import Button from "@mui/material/Button";
 
 export default function Shifts() {
   const mockData = [
     {
-      hours: 8,
-      status: "unassigned",
+     headcount: 8,
+     acceptances: 2,
     },
     {
-      hours: 8,
-      status: "assigned",
-    },
-    {
-      hours: 8,
-      status: "assigned",
-    },
-    {
-      hours: 6,
-      status: "assigned",
-    },
+      headcount: 2,
+      acceptances: 0,
+     },
+     {
+      headcount: 4,
+      acceptances: 4,
+     },
   ];
-
-  const unassignedTasks = mockData.filter((word) => word.status === 'unassigned');
-  const assignedTasks = mockData.filter((word) => word.status === 'assigned');
 
   return (
     <div
       style={{
         textAlign: "center",
         flex: 1,
-        backgroundColor: "#6DC86E",
+        backgroundColor: '#50ac94',
         paddingBottom: 1000,
         paddingTop: 10,
       }}
     >
       <h2 style={{ marginBottom: 80, fontSize: 45, color: 'white', marginTop: 30 }}>Shifts</h2>
 
-      <div style={{ marginBottom: 10 }}>
-        <div
-          style={{
-            height: 20,
-            width: 120,
-            background: "#FFCCCB",
-            marginLeft: 30,
-            borderRadius: 8,
-          }}
-        >
-          <p>UNassigned: {unassignedTasks.length}</p>
-        </div>
-
-        <div
-          style={{
-            height: 20,
-            width: 120,
-            background: "#b1dcd1",
-            marginLeft: 30,
-            borderRadius: 8,
-          }}
-        >
-          <p>assigned: {assignedTasks.length}</p>
-        </div>
-      </div>
-
       <div style={{ marginLeft: 90, marginRight: 90 }}>
         {mockData.map((x, i) => (
-          <Button variant="text" style={{ width: "100%", marginBottom: 30 }} onPress={console.log('button pressed')}>
             <div
               style={{
                 flex: 1,
-                backgroundColor:
-                  x.status !== "unassigned" ? "#b1dcd1" : "#FFCCCB",
+                backgroundColor: '#fcc494',
                 borderRadius: 8,
               }}
             >
@@ -79,12 +43,12 @@ export default function Shifts() {
                   textAlign: "start",
                   marginLeft: 10,
                   paddingTop: 15,
-                  fontSize: x.status === "unassigned" ? 20 : 16,
-                  fontWeight: x.status === "unassigned" ? "bold" : "normal",
+                  fontSize: 16,
+                  fontWeight: "normal",
                   color: "black",
                 }}
               >
-                Shift Hours: {x.hours}
+                HeadCount: {x.headcount}
               </p>
               <p
                 style={{
@@ -96,10 +60,9 @@ export default function Shifts() {
                   color: "black",
                 }}
               >
-                Shift Status: {x.status}
+                Acceptances: {x.acceptances}
               </p>
             </div>
-          </Button>
         ))}
       </div>
     </div>
