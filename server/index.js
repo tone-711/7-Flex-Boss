@@ -67,7 +67,7 @@ io.on("connection", async (socket) => {
     "register user",
     async ({ username, password, employeeId, email, mobilePhone }) => {
       const hash = await HashPW(password);
-      const user = myDB.collection("user");
+      const user = DB.collection("user");
 
       const query = { username: username };
       const update = {
@@ -105,7 +105,7 @@ io.on("connection", async (socket) => {
   socket.on("login", async ({ username, password }) => {
     // send a private message to the socket with the given it
 
-    const user = myDB.collection("user");
+    const user = DB.collection("user");
 
     const curUser = await user.findOne({ username: username });
 
@@ -143,7 +143,7 @@ io.on("connection", async (socket) => {
   socket.on("refresh session", async ({ token }) => {
     // send a private message to the socket with the given it
 
-    const user = myDB.collection("user");
+    const user = DB.collection("user");
 
     const verifiedToken = await jwt.verify(token, process.env.JWT_SECRET);
 
@@ -196,7 +196,7 @@ io.on("connection", async (socket) => {
     //await redisClient.del(socket.id);
 
     // io.emit("connected users", connectedUsers);
-    const user = myDB.collection("user");
+    const user = DB.collection("user");
 
     const query = { socket: socket.id };
     const update = {
