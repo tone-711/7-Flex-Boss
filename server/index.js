@@ -85,14 +85,16 @@ io.on("connection", async (socket) => {
       const options = { upsert: true };
       const result = await user.updateOne(query, update, options);
 
-      if (result.insertedId) {
+      console.log(result);
+
+      if (result) {
         socket.emit("register user response", {
           success: true,
           msg: "user registered",
         });
       } else {
         socket.emit("register user response", {
-          success: true,
+          success: false,
           msg: "user exists",
         });
       }
@@ -174,7 +176,7 @@ io.on("connection", async (socket) => {
     } else if (msgFlags[0] === "@") {
       console.log("@", msgFlags.substr(1));
       socket
-        .to(msgFlags.substr(1), msg.substr(msgFlags.length))
+        .to(msgFlags.substr(1))
         .emit("chat message", msg.substr(msgFlags.length));
     } else {
       io.emit("chat message", msg);
