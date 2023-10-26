@@ -69,7 +69,7 @@ io.on("connection", async (socket) => {
 
   socket.on(
     "register user",
-    async ({ username, password, employeeId, email, mobilePhone }) => {
+    async ({ username, password, employeeId, email, mobilePhone, role = "manager" }) => {
       const hash = await HashPW(password);
       const user = DB.collection("user");
 
@@ -82,7 +82,7 @@ io.on("connection", async (socket) => {
           email: email,
           mobilePhone: mobilePhone,
           socket: null,
-          role: "manager",
+          role: role,
         },
       };
       const options = { upsert: true };
