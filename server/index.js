@@ -145,25 +145,21 @@ io.on("connection", async (socket) => {
     try {
       const verifiedToken = await jwt.verify(token, process.env.JWT_SECRET);
 
-      if (verifiedToken) {
-        const curUser = await user.findOne({
-          username: verifiedToken.username,
-        });
+      const curUser = await user.findOne({
+        username: verifiedToken.username,
+      });
 
-        const query = { username: verifiedToken.username };
-        const update = {
-          $set: {
-            socket: socket.id,
-          },
-        };
-        await user.updateOne(query, update);
+      const query = { username: verifiedToken.username };
+      const update = {
+        $set: {
+          socket: socket.id,
+        },
+      };
+      await user.updateOne(query, update);
 
-        socket.join(curUser.role);
+      socket.join(curUser.role);
 
-        socket.emit("refresh session response", { success: true });
-      } else {
-        socket.emit("refresh session response", { success: false });
-      }
+      socket.emit("refresh session response", { success: true });
     } catch (e) {
       socket.emit("refresh session response", { success: false, error: e });
     }
