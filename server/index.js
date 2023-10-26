@@ -63,7 +63,7 @@ app.get("/", (req, res) => res.type("html").send(html));
 
 io.on("connection", async (socket) => {
   console.log("a user connected");
-  4;
+
   socket.on(
     "register user",
     async ({ username, password, employeeId, email, mobilePhone }) => {
@@ -86,19 +86,15 @@ io.on("connection", async (socket) => {
       const result = await user.updateOne(query, update, options);
 
       if (result.insertedId) {
-        socket
-          .to(socket.id)
-          .emit("register user response", {
-            success: true,
-            msg: "user registered",
-          });
+        socket.emit("register user response", {
+          success: true,
+          msg: "user registered",
+        });
       } else {
-        socket
-          .to(socket.id)
-          .emit("register user response", {
-            success: true,
-            msg: "user exists",
-          });
+        socket.emit("register user response", {
+          success: true,
+          msg: "user exists",
+        });
       }
     }
   );
@@ -130,14 +126,12 @@ io.on("connection", async (socket) => {
 
         socket.join(curUser.role);
 
-        socket
-          .to(socket.id)
-          .emit("login response", { success: true, token: token });
+        socket.emit("login response", { success: true, token: token });
       } else {
-        socket.to(socket.id).emit("login response", { success: false });
+        socket.emit("login response", { success: false });
       }
     } else {
-      socket.to(socket.id).emit("login response", { success: false });
+      socket.emit("login response", { success: false });
     }
   });
 
@@ -161,9 +155,9 @@ io.on("connection", async (socket) => {
 
       socket.join(curUser.role);
 
-      socket.to(socket.id).emit("refresh session response", { success: true });
+      socket.emit("refresh session response", { success: true });
     } else {
-      socket.to(socket.id).emit("refresh session response", { success: false });
+      socket.emit("refresh session response", { success: false });
     }
   });
 
