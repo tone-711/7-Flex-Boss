@@ -8,24 +8,24 @@ import "dotenv/config";
 
 async function HashPW(password) {
   return new Promise((resolve, reject) => {
-      // generate random 16 bytes long salt
-      const salt = crypto.randomBytes(16).toString("hex")
+    // generate random 16 bytes long salt
+    const salt = crypto.randomBytes(16).toString("hex");
 
-      crypto.scrypt(password, salt, 64, (err, derivedKey) => {
-          if (err) reject(err);
-          resolve(salt + ":" + derivedKey.toString('hex'))
-      });
-  })
+    crypto.scrypt(password, salt, 64, (err, derivedKey) => {
+      if (err) reject(err);
+      resolve(salt + ":" + derivedKey.toString("hex"));
+    });
+  });
 }
 
 async function VerifyPW(password, hash) {
   return new Promise((resolve, reject) => {
-      const [salt, key] = hash.split(":")
-      crypto.scrypt(password, salt, 64, (err, derivedKey) => {
-          if (err) reject(err);
-          resolve(key == derivedKey.toString('hex'))
-      });
-  })
+    const [salt, key] = hash.split(":");
+    crypto.scrypt(password, salt, 64, (err, derivedKey) => {
+      if (err) reject(err);
+      resolve(key == derivedKey.toString("hex"));
+    });
+  });
 }
 
 // Replace the placeholder with your Atlas connection string
@@ -66,85 +66,105 @@ io.on("connection", async (socket) => {
   socket.on(
     "register user",
     async ({ username, password, employeeId, email, mobilePhone }) => {
+      const hash = await HashPW(password);
+      const user = myDB.collection("user");
 
-        const hash = await HashPW(password);
-        const user = myDB.collection("user");
+      const query = { username: username };
+      const update = {
+        $set: {
+          username: username,
+          password: hash,
+          employeeId: employeeId,
+          email: email,
+          mobilePhone: mobilePhone,
+          socket: null,
+          role: "manager",
+        },
+      };
+      const options = { upsert: true };
+      const result = await user.updateOne(query, update, options);
 
-        const query = { username: username };
-        const update = {
-          $set: {
-            username: username,
-            password: hash,
-            employeeId: employeeId,
-            email: email,
-            mobilePhone: mobilePhone,
-          },
-        };
-        const options = { upsert: true };
-        const result = await user.updateOne(query, update, options);
-
-        if (result.insertedId) {
-          socket
-            .to(socket.id)
-            .emit("register user response", { success: true, msg: "user registered" });
-        } else {
-          socket
-            .to(socket.id)
-            .emit("register user response", { success: true, msg: "user exists" });
-        }
+      if (result.insertedId) {
+        socket
+          .to(socket.id)
+          .emit("register user response", {
+            success: true,
+            msg: "user registered",
+          });
+      } else {
+        socket
+          .to(socket.id)
+          .emit("register user response", {
+            success: true,
+            msg: "user exists",
+          });
+      }
     }
   );
 
-  socket.on("login", async ({username, password}) => {
+  socket.on("login", async ({ username, password }) => {
     // send a private message to the socket with the given it
 
     const user = myDB.collection("user");
 
-    const curUser = await user.findOne({username: username});
+    const curUser = await user.findOne({ username: username });
 
     if (curUser) {
       const checkPW = await VerifyPW(password, curUser.password);
 
       if (checkPW === true) {
+        const token = await jwt.sign(
+          { username: username },
+          process.env.JWT_SECRET,
+          { algorithm: "RS256", expiresIn: "12h" }
+        );
 
-        const token = await jwt.sign({ username: username }, process.env.JWT_SECRET, { algorithm: 'RS256', expiresIn: '12h' });
+        const query = { username: username };
+        const update = {
+          $set: {
+            socket: socket.id,
+          },
+        };
+        await user.updateOne(query, update);
+
+        socket.join(curUser.role);
 
         socket
-            .to(socket.id)
-            .emit("login response", { success: true, token: token });
+          .to(socket.id)
+          .emit("login response", { success: true, token: token });
       } else {
-        socket
-        .to(socket.id)
-        .emit("login response", { success: false });
+        socket.to(socket.id).emit("login response", { success: false });
       }
     } else {
-      socket
-        .to(socket.id)
-        .emit("login response", { success: false });
-    }
-
-    console.log("join channel", channelName);
-    socket.join(channelName);
-
-    if (channelName === "rtc") {
-      const rtcUser = { id: socket.id };
-
-      await redisClient.json.arrAppend("users", "$.connectedRtc", rtcUser);
-
-      await redisClient.json.arrAppend(
-        "users",
-        "$.connectedRtc_Index",
-        socket.id
-      );
-
-      const connectedRtcUsers = await redisClient.json.get("users", {
-        path: ["$.connectedRtc[*].id"],
-      });
-
-      io.emit("connected rtc users", connectedRtcUsers);
+      socket.to(socket.id).emit("login response", { success: false });
     }
   });
 
+  socket.on("refresh session", async ({ token }) => {
+    // send a private message to the socket with the given it
+
+    const user = myDB.collection("user");
+
+    const verifiedToken = await jwt.verify(token, process.env.JWT_SECRET);
+
+    if (verifiedToken) {
+      const curUser = await user.findOne({ username: verifiedToken.username });
+
+      const query = { username: verifiedToken.username };
+      const update = {
+        $set: {
+          socket: socket.id,
+        },
+      };
+      await user.updateOne(query, update);
+
+      socket.join(curUser.role);
+
+      socket.to(socket.id).emit("refresh session response", { success: true });
+    } else {
+      socket.to(socket.id).emit("refresh session response", { success: false });
+    }
+  });
 
   socket.on("chat message", (msg) => {
     console.log("message: " + msg);
@@ -175,9 +195,7 @@ io.on("connection", async (socket) => {
   socket.on("disconnect", async (reason) => {
     //await redisClient.del(socket.id);
 
-  
-
-   // io.emit("connected users", connectedUsers);
+    // io.emit("connected users", connectedUsers);
     console.log("a user disconnected", socket.id);
   });
 
