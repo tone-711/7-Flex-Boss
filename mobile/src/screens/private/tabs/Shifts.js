@@ -2,7 +2,7 @@ import React from 'react';
 import {Button} from 'react-native-paper';
 import {MemoContext} from '../../../services/MainMemo';
 import { useNavigation } from '@react-navigation/native';
-import AvailableShifts from '../../AvailableShifts';
+import AvailableShifts from '../AvailableShifts';
 
 const Shifts = props => {
   const navigation = useNavigation();
