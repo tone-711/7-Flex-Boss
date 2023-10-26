@@ -6,6 +6,7 @@ const MainInitialState = {
     isLoggedIn: false,
     socket: null,
     user: {},
+    token: null,
     status: {  show: false, message: '', duration: 1500  }
   };
 

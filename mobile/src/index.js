@@ -14,6 +14,10 @@ const Index = () => {
 
   socket?.on('connect', () => {
     console.log('Socket.IO Connected');
+
+    if (store.token != null) {
+      socket.emit("refresh session", {token: store.token});
+    }
   });
 
   useEffect(BackPressHandler, []);
