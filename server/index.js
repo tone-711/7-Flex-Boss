@@ -3,9 +3,15 @@ import crypto from "crypto";
 import express from "express";
 import cors from "cors";
 import { Server } from "socket.io";
-import { MongoClient, ServerApiVersion } from "mongodb";
+// import { MongoClient, ServerApiVersion } from "mongodb";
+// console.log(process.env.MONGODB_URL);
+import getDB from "./services/data/provider.js";
+import users from './services/data/user.js';
+
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+
+const DB = getDB(process.env.MONGODB_URL, "7FlexDB");
 
 async function HashPW(password) {
   return new Promise((resolve, reject) => {
@@ -29,17 +35,6 @@ async function VerifyPW(password, hash) {
   });
 }
 
-// Replace the placeholder with your Atlas connection string
-const uri = process.env.MONGODB_URL;
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-});
-const DB = client.db("7FlexDB");
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -63,6 +58,19 @@ app.get("/", (req, res) => res.type("html").send(html));
 
 io.on("connection", async (socket) => {
   console.log("a user connected");
+
+
+  socket.on("get gigs", async () => {
+    const result = await users.getall();
+
+    socket.emit("get users response", result);
+  });
+
+  socket.on("get users", async () => {
+    const result = await users.getall();
+
+    socket.emit("get users response", result);
+  });
 
   socket.on(
     "register user",
@@ -101,13 +109,16 @@ io.on("connection", async (socket) => {
     }
   );
 
+  socket.on("get users", async () => {
+    const result = await users.getall();
+
+    socket.emit("get users response", result);
+  });
+
+
   socket.on("login", async ({ username, password }) => {
     // send a private message to the socket with the given it
-
-    const user = DB.collection("user");
-
-    const curUser = await user.findOne({ username: username });
-
+    const curUser = await users.get(username);
     if (curUser) {
       const checkPW = await VerifyPW(password, curUser.password);
 
@@ -118,14 +129,7 @@ io.on("connection", async (socket) => {
           { expiresIn: "12h" }
         );
 
-        const query = { username: username };
-        const update = {
-          $set: {
-            socket: socket.id,
-          },
-        };
-        await user.updateOne(query, update);
-
+        await users.update(username, { socket: socket.id });
         socket.join(curUser.role);
 
         socket.emit("login response", { success: true, token: token });
@@ -140,23 +144,13 @@ io.on("connection", async (socket) => {
   socket.on("refresh session", async ({ token }) => {
     // send a private message to the socket with the given it
 
-    const user = DB.collection("user");
+    // const user = DB.collection("user");
 
     try {
       const verifiedToken = await jwt.verify(token, process.env.JWT_SECRET);
 
-      const curUser = await user.findOne({
-        username: verifiedToken.username,
-      });
-
-      const query = { username: verifiedToken.username };
-      const update = {
-        $set: {
-          socket: socket.id,
-        },
-      };
-      await user.updateOne(query, update);
-
+      const curUser = await users.get(verifiedToken.username);
+      await users.update(verifiedToken.username, { socket: socket.id });
       socket.join(curUser.role);
 
       socket.emit("refresh session response", { success: true });
