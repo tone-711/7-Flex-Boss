@@ -5,7 +5,7 @@ import cors from "cors";
 import { Server } from "socket.io";
 import { MongoClient, ServerApiVersion } from "mongodb";
 import jwt from "jsonwebtoken";
-import Geocodio from 'geocodio-library-node';
+import Geocodio from "geocodio-library-node";
 import "dotenv/config";
 
 const geocoder = new Geocodio(process.env.GEOCODIO_API_KEY);
@@ -193,6 +193,57 @@ io.on("connection", async (socket) => {
       socket.disconnect();
     }
   });
+
+  socket.on("add location", async ({ storeId, address }) => {
+    try {
+      const latlng = await geocoder.geocode(address);
+
+      const store = DB.collection("store");
+
+      const query = { storeId: storeId };
+      const update = {
+        $set: {
+          storeId: storeId,
+          address: address,
+          latlng: latlng
+        },
+      };
+      const options = { upsert: true };
+      const result = await store.updateOne(query, update, options);
+
+      console.log(result);
+
+      if (result.upsertedId) {
+        socket.emit("add location response", {
+          success: true,
+          msg: "location added",
+        });
+      } else {
+        socket.emit("register user response", {
+          success: false,
+          msg: "location exists",
+        });
+      }
+    } catch (e) {
+      socket.emit("add location response", {
+        success: false,
+        error: e,
+      });
+    }
+  });
+
+  socket.on("get all locations", async () => {
+      const store = DB.collection("store");
+
+      const stores = await store.find().toArray();;
+
+      socket.emit("get all locations response", {
+        success: true,
+        stores: stores
+      });
+
+  });
+
 
   socket.on("disconnect", async (reason) => {
     //await redisClient.del(socket.id);
