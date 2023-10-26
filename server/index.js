@@ -4,6 +4,7 @@ import express from "express";
 import cors from "cors";
 import { Server } from "socket.io";
 import { MongoClient, ServerApiVersion } from "mongodb";
+import jwt from "jsonwebtoken";
 import "dotenv/config";
 
 async function HashPW(password) {
