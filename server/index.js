@@ -219,7 +219,7 @@ io.on("connection", async (socket) => {
           msg: "location added",
         });
       } else {
-        socket.emit("register user response", {
+        socket.emit("add location response", {
           success: false,
           msg: "location exists",
         });
