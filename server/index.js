@@ -87,7 +87,7 @@ io.on("connection", async (socket) => {
 
       console.log(result);
 
-      if (result) {
+      if (result.upsertedId) {
         socket.emit("register user response", {
           success: true,
           msg: "user registered",
