@@ -1,4 +1,5 @@
 import React from 'react';
+import {StyleSheet, TextInput, View, Image} from 'react-native';
 import {Text, Button} from 'react-native-paper';
 import {MemoContext} from '../../services/MainMemo';
 import {
@@ -27,17 +28,37 @@ const Login = props => {
 
   return (
     <>
-      <Text style={{color: 'black'}}>Login</Text>
+      <View>
+      <View style={styles.title}>
+        <Image source={require('../../assets/Logo.png')} />
+      </View>
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Username</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your username"
+          placeholderTextColor="white"
+        />
+        <View style={styles.password}>
+          <Text style={styles.inputLabel}>Password</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your password"
+            placeholderTextColor="white"
+          />
+        </View>
+      </View>
       <Button
-        style={{margin: 10}}
+        style={styles.button}
         icon="login"
         mode="contained"
         onPress={() => login()}>
         Login
       </Button>
+      </View>
       {BiometricIsAvailable() && (
         <Button
-          style={{margin: 10}}
+          style={styles.button}
           icon="fingerprint"
           mode="contained"
           onPress={async () => {
@@ -50,7 +71,7 @@ const Login = props => {
         </Button>
       )}
       <Button
-        style={{margin: 10}}
+       style={styles.button}
         icon="lock-reset"
         mode="contained"
         onPress={() => props.navigation.navigate('Forgot')}>
@@ -59,5 +80,58 @@ const Login = props => {
     </>
   );
 };
+
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#6DC86E',
+  },
+  title: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 60,
+  },
+  titleText: {
+    color: 'black',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  inputContainer: {
+    marginTop: 60,
+    marginHorizontal: 32,
+  },
+  input: {
+    height: 40,
+    backgroundColor: '#FF9900',
+    padding: 10,
+  },
+  inputLabel: {
+    color: 'black',
+    fontSize: 16,
+    paddingBottom: 8,
+    fontWeight: 'bold',
+  },
+  password: {
+    marginTop: 24,
+  },
+  button: {
+    margin: 10, 
+    width: '80%',
+    alignSelf:'center'
+  },
+  loginButton: {
+    button: {
+      margin: 10, 
+      marginTop: 20,
+      width: '80%',
+      alignSelf:'center',
+    },
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+  },
+});
 
 export default Login;
