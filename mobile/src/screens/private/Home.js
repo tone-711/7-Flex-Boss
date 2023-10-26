@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { BottomNavigation, Text } from 'react-native-paper';
-import Shifts from './Shifts';
-import Accepted from './Accepted';
+import Shifts from './tabs/Shifts';
+import Accepted from './tabs/Accepted';
 
 const MyComponent = () => {
   const [index, setIndex] = React.useState(0);

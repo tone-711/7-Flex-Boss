@@ -1,6 +1,6 @@
 import React from 'react';
 import {Text, Button} from 'react-native-paper';
-import {MemoContext} from '../services/MainMemo';
+import {MemoContext} from '../../services/MainMemo';
 import {
   BiometricIsAvailable,
   BasicBiometricAuth,
