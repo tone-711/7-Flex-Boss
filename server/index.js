@@ -127,6 +127,7 @@ io.on("connection", async (socket) => {
       headCount:headCount 
     });
     socket.emit("create shift response", result);
+    io.to("associate").emit("Updated Shifts");
   });
   // endpoint udpate shift
   socket.on("update shift", async ( id, { storeId, payRate, startDate, endDate, availableCount, headCount } ) => {
@@ -232,6 +233,8 @@ io.on("connection", async (socket) => {
         socket.emit("book shift response", {
           success: true
         });
+
+        io.to("associate").emit("Updated Shifts");
       } else {
         socket.emit("book shift response", {
           success: false

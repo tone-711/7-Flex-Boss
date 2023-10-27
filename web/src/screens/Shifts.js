@@ -1,105 +1,109 @@
 import * as React from "react";
-import Button from "@mui/material/Button";
+import useSocketIO from '../services/useSocketIO'
 
 export default function Shifts() {
-  const mockData = [
-    {
-      hours: 8,
-      status: "unassigned",
-    },
-    {
-      hours: 8,
-      status: "assigned",
-    },
-    {
-      hours: 8,
-      status: "assigned",
-    },
-    {
-      hours: 6,
-      status: "assigned",
-    },
-  ];
+  const { socket } = useSocketIO();
+  const [shifts, setShifts] = React.useState(null)
+  const [error, setError] = React.useState('')
 
-  const unassignedTasks = mockData.filter((word) => word.status === 'unassigned');
-  const assignedTasks = mockData.filter((word) => word.status === 'assigned');
+  React.useEffect(() => {
+    socket.emit('get shifts', { getAll: true });
+  }, []);
+
+  socket?.on("get shifts response", ({ success, shifts }) => {
+    if (success === true) {
+      setError('')
+      setShifts(shifts)
+    }
+    else {
+      setError('Refresh to pull all shifts')
+    }
+  });
 
   return (
     <div
       style={{
         textAlign: "center",
         flex: 1,
-        backgroundColor: "#6DC86E",
+        backgroundColor: '#50ac94',
         paddingBottom: 1000,
         paddingTop: 10,
       }}
     >
       <h2 style={{ marginBottom: 80, fontSize: 45, color: 'white', marginTop: 30 }}>Shifts</h2>
-
-      <div style={{ marginBottom: 10 }}>
-        <div
-          style={{
-            height: 20,
-            width: 120,
-            background: "#FFCCCB",
-            marginLeft: 30,
-            borderRadius: 8,
-          }}
-        >
-          <p>UNassigned: {unassignedTasks.length}</p>
-        </div>
-
-        <div
-          style={{
-            height: 20,
-            width: 120,
-            background: "#b1dcd1",
-            marginLeft: 30,
-            borderRadius: 8,
-          }}
-        >
-          <p>assigned: {assignedTasks.length}</p>
-        </div>
-      </div>
+      {error ? <p style={{ color: '#ff0028' }}>{error}</p> : null}
 
       <div style={{ marginLeft: 90, marginRight: 90 }}>
-        {mockData.map((x, i) => (
-          <Button variant="text" style={{ width: "100%", marginBottom: 30 }} onPress={console.log('button pressed')}>
+        {shifts?.map((x,i) => (
             <div
               style={{
                 flex: 1,
-                backgroundColor:
-                  x.status !== "unassigned" ? "#b1dcd1" : "#FFCCCB",
+                backgroundColor: '#fcc494',
                 borderRadius: 8,
               }}
             >
-              {/* <p style={{ textAlign: "start", paddingTop: 10, marginLeft: 10 }}>{i + 1+')'}</p> */}
               <p
                 style={{
                   textAlign: "start",
                   marginLeft: 10,
                   paddingTop: 15,
-                  fontSize: x.status === "unassigned" ? 20 : 16,
-                  fontWeight: x.status === "unassigned" ? "bold" : "normal",
+                  fontSize: 16,
+                  fontWeight: "normal",
                   color: "black",
                 }}
               >
-                Shift Hours: {x.hours}
+                StoreId: {x.storeId}
               </p>
               <p
                 style={{
                   textAlign: "start",
                   marginLeft: 10,
+                  paddingTop: 15,
+                  fontSize: 16,
+                  fontWeight: "normal",
+                  color: "black",
+                }}
+              >
+                StartDate: {x.startDate}
+              </p>
+              <p
+                style={{
+                  textAlign: "start",
+                  marginLeft: 10,
+                  paddingTop: 15,
+                  fontSize: 16,
+                  fontWeight: "normal",
+                  color: "black",
+                }}
+              >
+                PayRate: {x.payRate}
+              </p>
+              <p
+                style={{
+                  textAlign: "start",
+                  marginLeft: 10,
+                  paddingTop: 15,
+                  fontSize: 16,
+                  fontWeight: "normal",
+                  color: "black",
+                }}
+              >
+                HeadCount: {x.headCount}
+              </p>
+              <p
+                style={{
+                  textAlign: "start",
+                  marginLeft: 10,
+                  paddingTop: 15,
                   paddingBottom: 15,
                   fontSize: x.status === "unassigned" ? 20 : 16,
                   fontWeight: x.status === "unassigned" ? "bold" : "normal",
                   color: "black",
                 }}
               >
-                Shift Status: {x.status}
+                AvailableSlots: {x.availableSlots}
               </p>
             </div>
-          </Button>
         ))}
       </div>
     </div>

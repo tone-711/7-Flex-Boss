@@ -1,4 +1,4 @@
-import "./style.css";
+import "../style.css";
 import { useState } from "react";
 import Button from "@mui/material/Button";
 import { TextField } from "@mui/material";
@@ -13,8 +13,8 @@ export default function Register() {
 
   return (
     <div className="Container">
-      <div className="Login">
-        <h2>Register</h2>
+      <div className="Login" style={{ justifyContent: 'flex-start' }}>
+        <h2>Sign Up</h2>
         <TextField
          value={id}
          onChange={(e) => {
@@ -117,7 +117,7 @@ export default function Register() {
             variant="contained"
             style={{ width: 300, marginTop: 10, background: "#000000" }}
           >
-            Register
+            Signup
           </Button>
         )}
       </div>

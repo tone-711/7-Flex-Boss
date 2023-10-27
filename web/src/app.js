@@ -1,8 +1,8 @@
-import React, { useEffect, useContext } from "react";
 import { MainContext } from "./store/main";
-import { MemoContext } from "./services/MainMemo";
 import { Private, Public } from "./navigation";
 import useSocketIO from "./services/useSocketIO";
+import { MemoContext } from "./services/MainMemo";
+import React, { useEffect, useContext } from "react";
 
 const App = () => {
   const {store} = useContext(MainContext);
