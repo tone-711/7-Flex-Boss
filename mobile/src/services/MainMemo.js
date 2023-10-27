@@ -42,6 +42,12 @@ const MainMemo = (store, dispatch) => {
         data: {token: token},
       });
     },
+    setShifts: item => {
+      dispatch({type: 'setShift', data: {shift: item}})
+    },
+    getShifts: () => {
+      return store.shifts;
+    }
   });
 
   return Memo;

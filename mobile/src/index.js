@@ -21,7 +21,7 @@ const Index = () => {
     console.log('Socket.IO Connected');
 
     if (store.token != null) {
-      socket.emit('refresh session', {token: store.token});
+      socket?.emit('refresh session', {token: store.token});
     }
   });
 

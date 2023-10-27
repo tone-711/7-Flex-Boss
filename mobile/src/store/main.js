@@ -7,7 +7,8 @@ const MainInitialState = {
     socket: null,
     user: {},
     token: null,
-    status: {  show: false, message: '', duration: 1500  }
+    status: {  show: false, message: '', duration: 1500  },
+    shifts: []
   };
 
   const MainReducer = (state, action) => {
@@ -19,6 +20,9 @@ const MainInitialState = {
         setObj.setObj = action.data;
         //console.log(JSON.stringify(setObj.getAll()));
         return { ...state, ...setObj.getObj };
+      case 'setShift':
+          const item = action.data.shift;
+          return {...state, shifts: [item, ...state.shifts]};
       default:
         //alert(action.cardTxt)
         return state;
