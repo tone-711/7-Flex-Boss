@@ -17,8 +17,8 @@ const table = DB.collection("store");
  */
 
 export default {
-    getStores: async function() {
-        return await table.find({availableCount: { $gt: 0 }}).toArray();
+    getAll: async function() {
+        return await table.find({}).toArray();
     },
     get: async function(storeId) {
         return await table.findOne({storeId: storeId});

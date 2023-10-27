@@ -207,14 +207,12 @@ io.on("connection", async (socket) => {
     }
   });
 
-  socket.on("get user bookings", async ({username}) => {
-    const booking = DB.collection("booking");
+  socket.on("get bookings by username", async ({username}) => {
+    const results = await bookings.getByUserName(username);
    
-      const bookings = await booking.find({ username: username } ).toArray();
-
-      socket.emit("get shifts response", {
+      socket.emit("get bookings by username response", {
         success: true,
-        stores: bookings,
+        stores: results,
       });
     
   });
@@ -359,11 +357,11 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("get all locations", async () => {
-      const stores = await stores.getStores();
+    const results = await stores.getAll();
 
     socket.emit("get all locations response", {
       success: true,
-      stores: stores,
+      stores: results,
     });
   });
 
