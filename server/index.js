@@ -3,7 +3,7 @@ import crypto from "crypto";
 import express from "express";
 import cors from "cors";
 import { Server } from "socket.io";
-import { MongoClient, ServerApiVersion } from "mongodb";
+import { MongoClient, ServerApiVersion, ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
 import Geocodio from "geocodio-library-node";
 import "dotenv/config";
@@ -290,7 +290,7 @@ io.on("connection", async (socket) => {
   socket.on("get shift by id", async ({gigId}) => {
     const shift = DB.collection("shift");
 
-    const res = await shift.findOne({ _id: gigId });
+    const res = await shift.findOne({ _id: ObjectId(gigId) });
 
     if (res) {
       socket.emit("get shift by id response", {
