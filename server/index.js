@@ -232,6 +232,8 @@ io.on("connection", async (socket) => {
         socket.emit("book shift response", {
           success: true
         });
+
+        io.to("associate").emit("Updated Shifts");
       } else {
         socket.emit("book shift response", {
           success: false
