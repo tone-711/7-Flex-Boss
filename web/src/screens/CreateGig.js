@@ -4,6 +4,7 @@ import { TextField } from "@mui/material";
 import { MainContext } from "../store/main";
 import { useState, useContext } from "react";
 import useSocketIO from '../services/useSocketIO'
+import { UTCDateMini, UTCDate } from "@date-fns/utc";
 
 export default function CreateGig() {
   const [startTime, setStartTime] = useState("");
@@ -20,6 +21,7 @@ export default function CreateGig() {
   socket?.on("new shift response", ({ success }) => {
     if (success === true) {
       setError("")
+      setGigCreated(true)
     }
     else {
       setError('Please try again')
@@ -27,13 +29,18 @@ export default function CreateGig() {
   });
 
   const settingStartTime = (prop) => {
-    setStartTime(prop)
-    sTime = new Date(startTime)
+    setStartTime(prop.toString())
+
   }
 
   const settingEndTime = (prop) => {
-    setEndTime(prop)
-    eTime = new Date(endTime)
+    setEndTime(prop.toString())
+  }
+
+  const submitFormData=()=>{
+    sTime = new UTCDate(startTime).toString();
+    eTime = new UTCDate(endTime).toString();
+    socket.emit("new shift", { storeId: store.storeId, startDate: sTime, endDate: eTime, payRate: rate, headCount: headcount })
   }
 
   return (
@@ -79,7 +86,7 @@ export default function CreateGig() {
         !rate ||
         !headcount ? null : (
           <Button
-          onClick={() => socket.emit("new shift", { storeId: store.storeId, startDate: sTime.toUTCString(), endDate: eTime.toUTCString(), payRate: rate, headCount: headcount })}
+          onClick={() => submitFormData()}
             variant="contained"
             style={{ width: 300, marginTop: 10, background: "#000000" }}
           >

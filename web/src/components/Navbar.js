@@ -12,6 +12,7 @@ export default function Navbar() {
     const logout = () => {
         window.sessionStorage.token=null
         setToken(null)
+        navigate('/')
     }
 
 return (
@@ -25,14 +26,14 @@ return (
         </div>
 
         <div style={{ marginRight: 20 }}>
-        <Link to="/CreateGig">
-        <a className="link" onClick={() => navigate('/creategig')} style={{ color: 'black', fontWeight: 'bold' }}>Create Gig</a>
+        <Link to="/Addlocation">
+        <a className="link" onClick={() => navigate('/addlocation')} style={{ color: 'black', fontWeight: 'bold' }}>Add Location</a>
         </Link>
         </div>
 
         <div style={{ marginRight: 20 }}>
-        <Link to="/Addlocation">
-        <a className="link" onClick={() => navigate('/addlocation')} style={{ color: 'black', fontWeight: 'bold' }}>Add Location</a>
+        <Link to="/CreateGig">
+        <a className="link" onClick={() => navigate('/creategig')} style={{ color: 'black', fontWeight: 'bold' }}>Create Gig</a>
         </Link>
         </div>
 
@@ -43,7 +44,7 @@ return (
         </div>
 
         <div style={{ marginRight: 20, position: 'absolute', right: 10 }}>
-        {/* <Link to="/Login" style={{ color: 'white', fontSize: 18 }}> */}
+        {/* <Link to="/" style={{ color: 'white', fontSize: 18 }}> */}
         <a onClick={() => logout()} style={{ fontWeight: 'bold', color: 'black' }}>Logout</a>
         {/* </Link> */}
         </div>
