@@ -193,7 +193,7 @@ io.on("connection", async (socket) => {
 
       const booking = DB.collection("booking");
 
-      const curShift = await shift.findOne({ _id: id });
+      const curShift = await shift.findOne({ _id: gigId });
 
       if (curShift) {
 
@@ -232,7 +232,7 @@ io.on("connection", async (socket) => {
     }
   });
 
-  socket.on("new shift", async ({ storeId, startDate, endDate, headCount = 1, payRate = 40 }) => {
+  socket.on("new shift", async ({ storeId, startDate, endDate, payRate = 40, headCount = 1 }) => {
     try {
       const shift = DB.collection("shift");
 
@@ -287,10 +287,10 @@ io.on("connection", async (socket) => {
     }
   });
 
-  socket.on("get shift by id", async (id) => {
+  socket.on("get shift by id", async ({gigId}) => {
     const shift = DB.collection("shift");
 
-    const res = await shift.findOne({ _id: id });
+    const res = await shift.findOne({ _id: gigId });
 
     if (res) {
       socket.emit("get shift by id response", {
