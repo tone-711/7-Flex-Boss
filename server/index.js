@@ -328,7 +328,7 @@ io.on("connection", async (socket) => {
   socket.on("get shift by id", async ({gigId}) => {
     const shift = DB.collection("shift");
 
-    const res = await shift.findOne({ _id: gigId });
+    const res = await shift.findOne({ _id: ObjectId(gigId) });
 
     if (res) {
       socket.emit("get shift by id response", {
