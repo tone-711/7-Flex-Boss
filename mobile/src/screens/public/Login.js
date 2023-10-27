@@ -25,15 +25,15 @@ const Login = props => {
 
   try {
   socket?.on('login response', ({success, token}) => {
+    toggleLoader(false);
     if (success === true) {
-      toggleLoader(false);
       setMmkvUserName(username);
       setUsername('');
       setPassword('');
       setMmkvToken(token);
       login(token);
     } else {
-      console.log('Invalid Username or Password!');
+      Alert.alert('Invalid Username or Password!');
     }
   });
 }catch(err) {
