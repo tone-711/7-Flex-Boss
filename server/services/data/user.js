@@ -5,6 +5,10 @@ const DB = getDB(process.env.MONGODB_URL, "7FlexDB");
 const table = DB.collection("user");
 
 export default {
+    updateSocket: async function(socket) {
+        // assumes socket is unique
+        return await table.updateOne( { socket: socket }, { $set: {socket: socket} } );
+    },
     getall: async function() {
         return await table.find({}).toArray();        
     },

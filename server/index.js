@@ -141,7 +141,7 @@ io.on("connection", async (socket) => {
     socket.emit("update shift response", result);
   });
   // endpoint delete shift
-  socket.on("delete shift", async ( id ) => {
+  socket.on("update shift", async ( id ) => {
     const result = await shifts.delete(id);
     socket.emit("delete shift response", result);
   });  
