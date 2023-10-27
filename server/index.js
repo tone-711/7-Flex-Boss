@@ -3,15 +3,16 @@ import crypto from "crypto";
 import express from "express";
 import cors from "cors";
 import { Server } from "socket.io";
-// import { MongoClient, ServerApiVersion } from "mongodb";
-// console.log(process.env.MONGODB_URL);
+
 import getDB from "./services/data/provider.js";
-import users from './services/data/user.js';
+import users  from './services/data/user.js';
+import stores from './services/data/stores.js';
+import gigs  from './services/data/gig.js';
+import bookings  from './services/data/bookings.js';
 
 import jwt from "jsonwebtoken";
+import Geocodio from "geocodio-library-node";
 import "dotenv/config";
-
-const DB = getDB(process.env.MONGODB_URL, "7FlexDB");
 
 async function HashPW(password) {
   return new Promise((resolve, reject) => {
@@ -74,7 +75,7 @@ io.on("connection", async (socket) => {
 
   socket.on(
     "register user",
-    async ({ username, password, employeeId, email, mobilePhone }) => {
+    async ({ username, password, employeeId, email, mobilePhone, role = "manager" }) => {
       const hash = await HashPW(password);
       const user = DB.collection("user");
 
@@ -87,7 +88,7 @@ io.on("connection", async (socket) => {
           email: email,
           mobilePhone: mobilePhone,
           socket: null,
-          role: "manager",
+          role: role,
         },
       };
       const options = { upsert: true };
@@ -109,10 +110,56 @@ io.on("connection", async (socket) => {
     }
   );
 
+  // endpoint get available gigs
+  socket.on("get available gigs", async () => {
+    const result = await gigs.getAvailable();
+    socket.emit("get available gigs response", result);
+  });
+  // endpoint get gigs by store
+  socket.on("get gigs by store", async ( { storeId } ) => {
+    const result = await gigs.getByStore(storeId);
+    socket.emit("get gigs by store response", result);
+  });
+  // endpoint create gig
+  socket.on("create gig", async ( { storeId, rate, startDate, endDate, availableCount, headCount } ) => {
+    const result = await gigs.create({ 
+      storeId:storeId, 
+      rate:rate, 
+      startDate:startDate, 
+      endDate:endDate, 
+      availableCount:availableCount, 
+      headCount:headCount 
+    });
+    socket.emit("create gig response", result);
+  });
+  // endpoint udpate gig
+  socket.on("update gig", async ( id, { storeId, rate, startDate, endDate, availableCount, headCount } ) => {
+    const result = await gigs.update(id, { 
+      storeId:storeId, 
+      rate:rate, 
+      startDate:startDate, 
+      endDate:endDate, 
+      availableCount:availableCount, 
+      headCount:headCount 
+    });
+    socket.emit("update gig response", result);
+  });
+  // endpoint delete gig
+  socket.on("delete gig", async ( id ) => {
+    const result = await gigs.delete(id);
+    socket.emit("delete gig response", result);
+  });  
+
+  
+  // endpoint get users
   socket.on("get users", async () => {
     const result = await users.getall();
-
     socket.emit("get users response", result);
+  });
+  // endpoint delete user
+  socket.on("delete user", async ({ username }) => {
+    const result = await users.delete(username);
+    socket.emit("delete user response", result);
   });
 
 
@@ -184,6 +231,48 @@ io.on("connection", async (socket) => {
       socket.disconnect();
     }
   });
+
+  socket.on("add location", async ({ storeId, address }) => {
+    try {
+      const latlng = await geocoder.geocode(address);
+
+      const result = await stores.update({
+        storeId: storeId,
+        address: address,
+        latlng: latlng.results[0].location
+      });
+
+      console.log(result);
+
+      if (result.upsertedId) {
+        socket.emit("add location response", {
+          success: true,
+          msg: "location added",
+        });
+      } else {
+        socket.emit("add location response", {
+          success: false,
+          msg: "location exists",
+        });
+      }
+    } catch (e) {
+      socket.emit("add location response", {
+        success: false,
+        error: e,
+      });
+    }
+  });
+
+  socket.on("get all locations", async () => {
+      const stores = await stores.getStores();
+
+      socket.emit("get all locations response", {
+        success: true,
+        stores: stores
+      });
+
+  });
+
 
   socket.on("disconnect", async (reason) => {
     //await redisClient.del(socket.id);

@@ -9,8 +9,6 @@ const table = DB.collection("gig");
  * @property {objectid} _id
  * @property {string}   storeId
  * @property {float}    rate
- * @property {string}   address
- * @property {Object}   {lat: numeric, lng: numeric}
  * @property {date}     startDate
  * @property {date}     endDate
  * @property {int32}    availableCount
@@ -21,8 +19,8 @@ export default {
     getAvailable: async function() {
         return await table.find({availableCount: { $gt: 0 }}).toArray();
     },
-    getByStore: async function() {
-        return await table.find({availableCount: { $gt: 0 }}).toArray();
+    getByStore: async function(storeId) {
+        return await table.find({storeId: storeId}).toArray();
     },
     get: async function(id) {
         return await table.findOne({_id: id});

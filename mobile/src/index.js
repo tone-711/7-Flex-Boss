@@ -7,17 +7,37 @@ import PageLoader from './components/PageLoader';
 import {Public, Private} from './navigation';
 import useSocketIO from './services/useSocketIO';
 import {MainContext} from './store/main';
+import {MemoContext} from './services/MainMemo';
+import useMmkv from './services/useMmkv';
 
 const Index = () => {
   const {connect, socket} = useSocketIO();
   const {store} = useContext(MainContext);
+  const {setToken} = useContext(MemoContext);
+  const mmkvStorage = useMmkv();
+  const [mmkvToken, setMmkvToken] = mmkvStorage('token');
 
   socket?.on('connect', () => {
     console.log('Socket.IO Connected');
+
+    if (store.token != null) {
+      socket.emit('refresh session', {token: store.token});
+    }
+  });
+
+  socket?.on('refresh session response', ({success}) => {
+    if (success === false) {
+      setMmkvToken(null);
+      setToken(null);
+    }
   });
 
   useEffect(BackPressHandler, []);
   useEffect(() => {
+    if (window.sessionStorage.token) {
+      setToken(window.sessionStorage.token);
+      console.log(window.sessionStorage.token);
+    }
     async function connectSocketIO() {
       await connect();
     }

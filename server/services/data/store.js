@@ -8,7 +8,6 @@ const table = DB.collection("store");
  * @typedef {Object} Gig
  * @property {objectid} _id
  * @property {string}   storeId
- * @property {float}    rate
  * @property {string}   address
  * @property {Object}   {lat: numeric, lng: numeric}
  * @property {date}     startDate
@@ -21,19 +20,16 @@ export default {
     getStores: async function() {
         return await table.find({availableCount: { $gt: 0 }}).toArray();
     },
-    getGigsByStore: async function() {
-        return await table.find({availableCount: { $gt: 0 }}).toArray();
-    },
-    get: async function(id) {
-        return await table.findOne({_id: id});
+    get: async function(storeId) {
+        return await table.findOne({storeId: storeId});
     },
     create: async function(set) {
         return await table.insertOne( { $set: set } );
     },
-    update: async function(id, set) {
-        return await table.updateOne( { _id: id }, { $set: set } );
+    update: async function(storeId, set) {
+        return await table.updateOne( { storeId: storeId }, { $set: set }, { upsert: true } );
     },
-    delete: async function(id) {
-        return await table.deleteOne( { _id: id }, { $set: set } );
+    delete: async function(storeId) {
+        return await table.deleteOne( { storeId: id }, { $set: set } );
     },
 };
