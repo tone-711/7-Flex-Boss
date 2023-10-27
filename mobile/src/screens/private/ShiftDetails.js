@@ -12,6 +12,7 @@ import {
 import {MemoContext} from '../../services/MainMemo';
 import { useIsFocused } from '@react-navigation/native';
 import useSocketIO from '../../services/useSocketIO';
+import useMmkv from '../../services/useMmkv';
 
 const ShiftDetails = props => {
   const {item} = props.route.params;
@@ -21,6 +22,8 @@ const ShiftDetails = props => {
   const [shift, setShift] = useState('');
   const {socket} = useSocketIO();
   const isFocused = useIsFocused();
+  const mmkvStorage = useMmkv();
+  const [mmkuserName, setMmkvUserName] = mmkvStorage('username');
 
   const shiftStartDate = item?.startDate.slice(0,10);
 
@@ -32,7 +35,8 @@ const ShiftDetails = props => {
 
 
   const updateShifts = () => {
-    setShifts(item);
+    //setShifts(item);
+    socket?.emit('book shift', { shiftId: item?._id, username: mmkuserName });
     props.navigation.navigate('Home')
   }
 

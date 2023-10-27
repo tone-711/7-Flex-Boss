@@ -28,16 +28,16 @@ const Index = () => {
   socket?.on('refresh session response', ({success}) => {
     if (success === false) {
       setMmkvToken(null);
-      setToken(null);
+      //setToken(null);
     }
   });
 
   useEffect(BackPressHandler, []);
   useEffect(() => {
-    if (mmkvToken) {
-      setToken(mmkvToken);
-      console.log(mmkvToken);
-    }
+    // if (mmkvToken) {
+    //   //setToken(mmkvToken);
+    //   console.log(mmkvToken);
+    // }
     async function connectSocketIO() {
       await connect();
     }

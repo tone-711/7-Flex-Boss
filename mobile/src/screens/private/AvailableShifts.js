@@ -7,10 +7,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Text} from 'react-native-paper';
+import {Button, Text} from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import useSocketIO from '../../services/useSocketIO';
 import { useIsFocused } from '@react-navigation/native';
+import LaunchNavigator from 'react-native-launch-navigator';
 
 const DATA = [
   {
@@ -50,13 +51,6 @@ const DATA = [
   },
 ];
 
-const Item = ({item, onPress, backgroundColor, textColor}) => (
-  <TouchableOpacity onPress={onPress} style={[styles.item, {backgroundColor}]}>
-    <Text style={[styles.title, {color: 'black'}]}>{"STORE ID"} : {item.storeId} - {"Available Shifts"} : {item.availableSlots}</Text> 
-  </TouchableOpacity>
-);
-
-
 const AvailableShifts = props => {
   const navigation = useNavigation();  
   const [selectedId, setSelectedId] = useState();
@@ -76,9 +70,27 @@ const AvailableShifts = props => {
     }
   });
 
+  const Item = ({item, onPress, backgroundColor, textColor}) => (
+    <TouchableOpacity onPress={onPress} style={[styles.item, {backgroundColor}]}>
+      <Text style={[styles.title, {color: 'black'}]}>{"STORE ID"} : {item.storeId} - {"Available Shifts"} : {item.availableSlots}</Text> 
+      <Button onPress={() => openNavigator(item) }>Navigate</Button>
+    </TouchableOpacity>
+  );
+
+  const openNavigator = ({item}) => {
+    socket?.emit('get location by id', { storeId: item?.storeId });
+
+    socket?.on('get location by id response', ({success, store}) => {
+      if (success === true) {
+        LaunchNavigator.navigate([store.latlng.lat, store.latlng.lng])
+          .then(() => console.log("Launched navigator"))
+          .catch((err) => console.error("Error launching navigator: "+err));
+      } 
+    });
+  };
+
   React.useEffect(() => {
     if(isFocused) {
-      console.log('USEEFFCT');
       socket?.emit('get shifts', { getAll: false });
     }
   }, [isFocused]);
