@@ -1,4 +1,5 @@
 import React from 'react';
+import {View, StyleSheet} from 'react-native';
 import {Button} from 'react-native-paper';
 import {MemoContext} from '../../../services/MainMemo';
 import { useNavigation } from '@react-navigation/native';
@@ -8,7 +9,7 @@ const Shifts = props => {
   const navigation = useNavigation();
   const {logout} = React.useContext(MemoContext);
   return (
-    <>
+    <View style={styles.container}>
     <AvailableShifts/>
       <Button
         style={{margin: 10}}
@@ -24,8 +25,16 @@ const Shifts = props => {
         onPress={() => navigation.navigate('Options')}>
         Options
       </Button>
-    </>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex:1,
+    flexDirection: 'column',
+    backgroundColor: '#50ac94'
+  },
+});
 
 export default Shifts;

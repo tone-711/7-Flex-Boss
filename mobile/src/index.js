@@ -21,7 +21,7 @@ const Index = () => {
     console.log('Socket.IO Connected');
 
     if (store.token != null) {
-      socket.emit('refresh session', {token: store.token});
+      socket?.emit('refresh session', {token: store.token});
     }
   });
 
@@ -34,9 +34,9 @@ const Index = () => {
 
   useEffect(BackPressHandler, []);
   useEffect(() => {
-    if (window.sessionStorage.token) {
-      setToken(window.sessionStorage.token);
-      console.log(window.sessionStorage.token);
+    if (mmkvToken) {
+      setToken(mmkvToken);
+      console.log(mmkvToken);
     }
     async function connectSocketIO() {
       await connect();
@@ -48,7 +48,7 @@ const Index = () => {
     <PaperProvider>
       <NavigationContainer onReady={() => {}}>
         <PageLoader message="Please Wait..." isActive={store.isLoading} />
-        {store.isLoggedIn === true ? <Private /> : <Public />}
+        {store.token ? <Private /> : <Public />}
         <Snackbar
           visible={store.status.show}
           duration={store.status.duration}

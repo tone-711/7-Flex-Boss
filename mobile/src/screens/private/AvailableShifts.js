@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   FlatList,
   SafeAreaView,
@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import {Text} from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
+import useSocketIO from '../../services/useSocketIO';
+import { useIsFocused } from '@react-navigation/native';
 
 const DATA = [
   {
@@ -50,7 +52,7 @@ const DATA = [
 
 const Item = ({item, onPress, backgroundColor, textColor}) => (
   <TouchableOpacity onPress={onPress} style={[styles.item, {backgroundColor}]}>
-    <Text style={[styles.title, {color: textColor}]}>{item.title} - {item.location}</Text> 
+    <Text style={[styles.title, {color: 'black'}]}>{item.title} - {item.location}</Text> 
   </TouchableOpacity>
 );
 
@@ -58,15 +60,37 @@ const Item = ({item, onPress, backgroundColor, textColor}) => (
 const AvailableShifts = props => {
   const navigation = useNavigation();  
   const [selectedId, setSelectedId] = useState();
+  const [data, setData] = useState('');
+  const {socket} = useSocketIO();
+  const isFocused = useIsFocused();
+  const shiftData = props?.shifts;
+
+  socket?.on('get shifts response', ({success, shifts}) => {
+    console.log('getShiftss--->')
+    if (success === true) {
+      console.log('shifts');
+      setData(shifts);
+    } else {
+      console.log('Error fetching Data');
+    }
+  });
+
+  React.useEffect(() => {
+    if(isFocused) {
+      console.log('USEEFFCT');
+      socket?.emit('get shifts', { getAll: false });
+    }
+  }, [isFocused]);
+
 
   const renderItem = ({item}) => {
-    const backgroundColor = item.id === selectedId ? '#CED0CE' : '#CED0CB';
+    const backgroundColor = item.id === selectedId ? '#CED0CE' : '#fcc494';
     const color = item.id === selectedId ? 'white' : 'black';
 
     return (
       <Item
         item={item}
-        onPress={() => navigation.navigate('ShiftDetails', {item:item})}
+        onPress={() => !shiftData && navigation.navigate('ShiftDetails', {item:item})}
         backgroundColor={backgroundColor}
         textColor={color}
       />
@@ -88,7 +112,7 @@ const AvailableShifts = props => {
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
-        data={DATA}
+        data={shiftData ?? DATA}
         renderItem={renderItem}
         keyExtractor={item => item.id}
         extraData={selectedId}
@@ -111,6 +135,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 15,
+    fontWeight: 'bold',
   },
 });
 

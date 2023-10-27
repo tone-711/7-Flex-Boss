@@ -24,16 +24,16 @@ const MainMemo = (store, dispatch) => {
     getUser: () => {
       return store.user;
     },
-    login: () => {
+    login: (token = null) => {
       dispatch({
         type: 'set',
-        data: {isLoggedIn: true},
+        data: {isLoggedIn: true, token: token},
       });
     },
     logout: () => {
       dispatch({
         type: 'set',
-        data: {isLoggedIn: false},
+        data: {token: null},
       });
     },
     setToken: token => {
@@ -42,6 +42,12 @@ const MainMemo = (store, dispatch) => {
         data: {token: token},
       });
     },
+    setShifts: item => {
+      dispatch({type: 'setShift', data: {shift: item}})
+    },
+    getShifts: () => {
+      return store.shifts;
+    }
   });
 
   return Memo;

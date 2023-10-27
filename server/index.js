@@ -3,9 +3,17 @@ import crypto from "crypto";
 import express from "express";
 import cors from "cors";
 import { Server } from "socket.io";
-import { MongoClient, ServerApiVersion } from "mongodb";
+
+import users  from './services/data/user.js';
+import stores from './services/data/store.js';
+import shifts  from './services/data/shift.js';
+import bookings  from './services/data/booking.js';
+
 import jwt from "jsonwebtoken";
+import Geocodio from "geocodio-library-node";
 import "dotenv/config";
+
+const geocoder = new Geocodio(process.env.GEOCODIO_API_KEY);
 
 async function HashPW(password) {
   return new Promise((resolve, reject) => {
@@ -29,17 +37,6 @@ async function VerifyPW(password, hash) {
   });
 }
 
-// Replace the placeholder with your Atlas connection string
-const uri = process.env.MONGODB_URL;
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-});
-const DB = client.db("7FlexDB");
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -64,26 +61,34 @@ app.get("/", (req, res) => res.type("html").send(html));
 io.on("connection", async (socket) => {
   console.log("a user connected");
 
+
+  socket.on("get users", async () => {
+    const result = await users.getall();
+
+    socket.emit("get users response", result);
+  });
+
   socket.on(
     "register user",
-    async ({ username, password, employeeId, email, mobilePhone }) => {
+    async ({
+      username,
+      password,
+      employeeId,
+      email,
+      mobilePhone,
+      role = "manager",
+    }) => {
       const hash = await HashPW(password);
-      const user = DB.collection("user");
 
-      const query = { username: username };
-      const update = {
-        $set: {
-          username: username,
-          password: hash,
-          employeeId: employeeId,
-          email: email,
-          mobilePhone: mobilePhone,
-          socket: null,
-          role: "manager",
-        },
-      };
-      const options = { upsert: true };
-      const result = await user.updateOne(query, update, options);
+      const result = await users.update(username, {
+        username: username,
+        password: hash,
+        employeeId: employeeId,
+        email: email,
+        mobilePhone: mobilePhone,
+        socket: null,
+        role: role,
+      })
 
       console.log(result);
 
@@ -101,13 +106,62 @@ io.on("connection", async (socket) => {
     }
   );
 
+  // endpoint get available shifts
+  socket.on("get available shifts", async () => {
+    const result = await shifts.getAvailable();
+    socket.emit("get available shifts response", result);
+  });
+  // endpoint get shifts by store
+  socket.on("get shifts by store", async ( { storeId } ) => {
+    const result = await shifts.getByStore(storeId);
+    socket.emit("get shifts by store response", result);
+  });
+  // endpoint create shift
+  socket.on("create shift", async ( { storeId, payRate, startDate, endDate, availableCount, headCount } ) => {
+    const result = await shifts.create({ 
+      storeId:storeId, 
+      payRate:payRate, 
+      startDate:startDate, 
+      endDate:endDate, 
+      availableCount:availableCount, 
+      headCount:headCount 
+    });
+    socket.emit("create shift response", result);
+  });
+  // endpoint udpate shift
+  socket.on("update shift", async ( id, { storeId, payRate, startDate, endDate, availableCount, headCount } ) => {
+    const result = await shifts.update(id, { 
+      storeId:storeId, 
+      payRate:payRate, 
+      startDate:startDate, 
+      endDate:endDate, 
+      availableCount:availableCount, 
+      headCount:headCount 
+    });
+    socket.emit("update shift response", result);
+  });
+  // endpoint delete shift
+  socket.on("update shift", async ( id ) => {
+    const result = await shifts.delete(id);
+    socket.emit("delete shift response", result);
+  });  
+
+  
+  // endpoint get users
+  socket.on("get users", async () => {
+    const result = await users.getall();
+    socket.emit("get users response", result);
+  });
+  // endpoint delete user
+  socket.on("delete user", async ({ username }) => {
+    const result = await users.delete(username);
+    socket.emit("delete user response", result);
+  });
+
+
   socket.on("login", async ({ username, password }) => {
     // send a private message to the socket with the given it
-
-    const user = DB.collection("user");
-
-    const curUser = await user.findOne({ username: username });
-
+    const curUser = await users.get(username);
     if (curUser) {
       const checkPW = await VerifyPW(password, curUser.password);
 
@@ -118,14 +172,7 @@ io.on("connection", async (socket) => {
           { expiresIn: "12h" }
         );
 
-        const query = { username: username };
-        const update = {
-          $set: {
-            socket: socket.id,
-          },
-        };
-        await user.updateOne(query, update);
-
+        await users.update(username, { socket: socket.id });
         socket.join(curUser.role);
 
         socket.emit("login response", { success: true, token: token });
@@ -140,23 +187,11 @@ io.on("connection", async (socket) => {
   socket.on("refresh session", async ({ token }) => {
     // send a private message to the socket with the given it
 
-    const user = DB.collection("user");
-
     try {
       const verifiedToken = await jwt.verify(token, process.env.JWT_SECRET);
 
-      const curUser = await user.findOne({
-        username: verifiedToken.username,
-      });
-
-      const query = { username: verifiedToken.username };
-      const update = {
-        $set: {
-          socket: socket.id,
-        },
-      };
-      await user.updateOne(query, update);
-
+      const curUser = await users.get(verifiedToken.username);
+      await users.update(verifiedToken.username, { socket: socket.id });
       socket.join(curUser.role);
 
       socket.emit("refresh session response", { success: true });
@@ -165,23 +200,113 @@ io.on("connection", async (socket) => {
     }
   });
 
-  socket.on("chat message", (msg) => {
-    console.log("message: " + msg);
-    const msgFlags = msg.split(" ")[0];
+  socket.on("get bookings by username", async ({username}) => {
+    const results = await bookings.getByUserName(username);
+   
+      socket.emit("get bookings by username response", {
+        success: true,
+        stores: results,
+      });
+    
+  });
 
-    if (msgFlags.startsWith("@ch:")) {
-      console.log("@ch:", msgFlags.substr(4), msg.substr(msgFlags.length));
-      io.to(msgFlags.substr(4)).emit(
-        "chat message",
-        msg.substr(msgFlags.length)
-      );
-    } else if (msgFlags[0] === "@") {
-      console.log("@", msgFlags.substr(1));
-      socket
-        .to(msgFlags.substr(1))
-        .emit("chat message", msg.substr(msgFlags.length));
+  socket.on("book shift", async ({ username, shiftId }) => {
+    try {
+      const curShift = await shifts.get(shiftId);
+
+      if (curShift) {
+
+      const result = await bookings.create({
+        storeId: curShift.storeId,
+        shiftId: shiftId,
+        startDate: curShift.startDate,
+        endDate: curShift.endDate,
+        username: username,
+        payRate: curShift.payRate
+      });
+
+      await shifts.update(shiftId, { availableSlots: curShift.availableSlots - 1 });
+
+      console.log(result);
+
+        socket.emit("book shift response", {
+          success: true
+        });
+      } else {
+        socket.emit("book shift response", {
+          success: false
+        });
+      }
+    } catch (e) {
+      console.log(e);
+      socket.emit("book shift response", {
+        success: false,
+        error: e,
+      });
+    }
+  });
+
+  socket.on("new shift", async ({ storeId, startDate, endDate, payRate = 40, headCount = 1 }) => {
+    try {
+      const result = await shifts.create({
+        storeId: storeId,
+        startDate: typeof startDate === "string" ? new Date(startDate) : startDate,
+        endDate: typeof endDate === "string" ? new Date(endDate) : endDate,
+        headCount: headCount,
+        payRate: payRate,
+        availableSlots: headCount
+      });
+
+      console.log(result);
+
+      if (result.insertedId) {
+        socket.emit("new shift response", {
+          success: true,
+          shiftId: result.insertedId,
+        });
+      } else {
+        socket.emit("new shift response", {
+          success: false
+        });
+      }
+    } catch (e) {
+      console.log(e);
+      socket.emit("new shift response", {
+        success: false,
+        error: e,
+      });
+    }
+  });
+
+  socket.on("get shifts", async ({getAll = false}) => {
+    if (getAll === true) {
+      const results = await shifts.getAll();
+      socket.emit("get shifts response", {
+        success: true,
+        shifts: results,
+      });
     } else {
-      io.emit("chat message", msg);
+      const results = await shifts.getAvailable();
+
+      socket.emit("get shifts response", {
+        success: true,
+        shifts: results,
+      });
+    }
+  });
+
+  socket.on("get shift by id", async ({shiftId}) => {
+    const results = await shifts.get(shiftId);
+
+    if (results) {
+      socket.emit("get shift by id response", {
+        success: true,
+        shift: results,
+      });
+    } else {
+      socket.emit("get shift by id response", {
+        success: false,
+      });
     }
   });
 
@@ -191,20 +316,63 @@ io.on("connection", async (socket) => {
     }
   });
 
+  socket.on("add location", async ({ storeId, address }) => {
+    try {
+      const latlng = await geocoder.geocode(address);
+
+      const result = await stores.update({
+        storeId: storeId,
+        address: address,
+        latlng: latlng.results[0].location
+      });
+
+      console.log(result);
+
+      if (result.upsertedId) {
+        socket.emit("add location response", {
+          success: true,
+          msg: "location added",
+        });
+      } else {
+        socket.emit("add location response", {
+          success: false,
+          msg: "location exists",
+        });
+      }
+    } catch (e) {
+      socket.emit("add location response", {
+        success: false,
+        error: e,
+      });
+    }
+  });
+
+  socket.on("get all locations", async () => {
+    const results = await stores.getAll();
+
+    socket.emit("get all locations response", {
+      success: true,
+      stores: results,
+    });
+  });
+
+  socket.on("get location by id", async ({ storeId }) => {
+    const results = await stores.get(storeId);
+
+    if (results) {
+      socket.emit("get location by id response", {
+        success: true,
+        store: results,
+      });
+    } else {
+      socket.emit("get location by id response", {
+        success: false,
+      });
+    }
+  });
+
   socket.on("disconnect", async (reason) => {
-    //await redisClient.del(socket.id);
-
-    // io.emit("connected users", connectedUsers);
-    const user = DB.collection("user");
-
-    const query = { socket: socket.id };
-    const update = {
-      $set: {
-        socket: null,
-      },
-    };
-    const result = await user.updateOne(query, update);
-
+    const result = await users.updateSocket(socket.id);
     console.log("a user disconnected", socket.id, result);
   });
 

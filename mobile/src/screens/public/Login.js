@@ -1,7 +1,8 @@
-import React from 'react';
-import {StyleSheet, TextInput, View, Image} from 'react-native';
+import React, {useState} from 'react';
+import {StyleSheet, TextInput, View, Image, Alert} from 'react-native';
 import {Text, Button} from 'react-native-paper';
 import {MemoContext} from '../../services/MainMemo';
+import useSocketIO from '../../services/useSocketIO';
 import {
   BiometricIsAvailable,
   BasicBiometricAuth,
@@ -11,50 +12,78 @@ import {
   GetUser,
   DeleteUser,
 } from 'react-native-biometric-login';
+import useMmkv from '../../services/useMmkv';
 
 const Login = props => {
-  const {login} = React.useContext(MemoContext);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const {login, toggleLoader} = React.useContext(MemoContext);
+  const {socket} = useSocketIO();
+  const mmkvStorage = useMmkv();
+  const [mmkvToken, setMmkvToken] = mmkvStorage('token');
+
+  socket?.on('login response', ({success, token}) => {
+    if (success === true) {
+      toggleLoader(false);
+      setUsername('');
+      setPassword('');
+      setMmkvToken(token);
+      login(token);
+    } else {
+      Alert.alert('Invalid Username or Password!');
+    }
+  });
 
   React.useEffect(() => {
-    const testBiometric = async () => {
-      await SetUser('SomeUser', 'SomePassword');
-      const user = await GetUser();
-      console.log('bioUser', user);
-      await DeleteUser();
-    };
+    // const testBiometric = async () => {
+    //   //await SetUser('SomeUser', 'SomePassword');
+    //   const user = await GetUser();
+    //   console.log('bioUser', user);
+    //   await DeleteUser();
+    // };
 
-    testBiometric();
+    // testBiometric();
   }, []);
 
   return (
     <>
       <View>
-      <View style={styles.title}>
-        <Image source={require('../../assets/Logo.png')} />
-      </View>
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Username</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your username"
-          placeholderTextColor="white"
-        />
-        <View style={styles.password}>
-          <Text style={styles.inputLabel}>Password</Text>
+        <View style={styles.title}>
+          <Image source={require('../../assets/Logo.png')} />
+        </View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Username</Text>
           <TextInput
+            value={username}
+            autoCapitalize="none"
+            onChangeText={val => setUsername(val)}
             style={styles.input}
-            placeholder="Enter your password"
+            placeholder="Enter your username"
             placeholderTextColor="white"
           />
+          <View style={styles.password}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <TextInput
+              value={password}
+              secureTextEntry={true}
+              onChangeText={val => setPassword(val)}
+              style={styles.input}
+              placeholder="Enter your password"
+              placeholderTextColor="white"
+            />
+          </View>
         </View>
-      </View>
-      <Button
-        style={styles.button}
-        icon="login"
-        mode="contained"
-        onPress={() => login()}>
-        Login
-      </Button>
+        <Button
+          style={styles.button}
+          disabled={username !== '' && password !== '' ? false : true}
+          icon="login"
+          mode="contained"
+          onPress={() => {
+            toggleLoader(true);
+            socket?.emit('login', {username: username, password: password});
+          }}>
+          Login
+        </Button>
       </View>
       {BiometricIsAvailable() && (
         <Button
@@ -71,7 +100,7 @@ const Login = props => {
         </Button>
       )}
       <Button
-       style={styles.button}
+        style={styles.button}
         icon="lock-reset"
         mode="contained"
         onPress={() => props.navigation.navigate('Forgot')}>
@@ -80,7 +109,6 @@ const Login = props => {
     </>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -116,16 +144,16 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   button: {
-    margin: 10, 
+    margin: 10,
     width: '80%',
-    alignSelf:'center'
+    alignSelf: 'center',
   },
   loginButton: {
     button: {
-      margin: 10, 
+      margin: 10,
       marginTop: 20,
       width: '80%',
-      alignSelf:'center',
+      alignSelf: 'center',
     },
   },
   buttonText: {
