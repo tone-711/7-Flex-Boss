@@ -13,7 +13,7 @@ export default function Register() {
 
   return (
     <div className="Container">
-      <div className="Login">
+      <div className="Login" style={{ justifyContent: 'flex-start' }}>
         <h2>Sign Up</h2>
         <TextField
          value={id}

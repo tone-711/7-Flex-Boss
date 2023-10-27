@@ -1,23 +1,23 @@
 import "../style.css";
 import logo from '../logo.png';
-import { useState, useContext } from "react";
 import Button from "@mui/material/Button";
 import { TextField } from "@mui/material";
 import { Link, useLocation } from "wouter";
+import { useState, useContext } from "react";
 import useSocketIO from '../services/useSocketIO'
 import { MemoContext } from "../services/MainMemo";
 
 export default function Login() {
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [location, navigate] = useLocation();
   const { socket } = useSocketIO();
   const {setToken} = useContext(MemoContext);
 
       socket?.on("login response", ({ success, token }) => {
         if (success === true) {
-          setError('')
+          setError(null)
           window.sessionStorage.token=token
           setToken(token);
         }

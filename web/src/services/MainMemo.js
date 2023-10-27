@@ -29,6 +29,12 @@ const MainMemo = (store, dispatch) => {
         data: {token: token},
       });
     },
+    setStoreId: storeId => {
+      dispatch({
+        type: 'set',
+        data: {storeId: storeId},
+      });
+    },
   });
 
   return Memo;

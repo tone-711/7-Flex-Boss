@@ -1,13 +1,12 @@
 import React from "react";
-import { Router, Route, Switch } from "wouter";
-import RegisterEmployee from "../screens/RegisterEmployee";
-import Shifts from "../screens/Shifts";
 import Login from "../screens/Login";
+import Shifts from "../screens/Shifts";
+import Navbar from "../components/Navbar";
 import Register from "../screens/Register";
 import CreateGig from "../screens/CreateGig";
+import { Router, Route, Switch } from "wouter";
 import Addlocation from "../screens/AddLocation";
-import Navbar from "../components/Navbar";
-
+import RegisterEmployee from "../screens/RegisterEmployee";
 
 const Private = (props) => {
   return (

@@ -1,45 +1,51 @@
-import React from 'react';
 import { Box } from '@mui/material';
+import React, { useContext } from "react";
 import AppBar from '@mui/material/AppBar';
 import { Link, useLocation } from "wouter";
 import Toolbar from '@mui/material/Toolbar';
+import { MemoContext } from "../services/MainMemo";
 
 export default function Navbar() {
     const [location, navigate] = useLocation();
+    const {setToken} = useContext(MemoContext);
+
+    const logout = () => {
+        window.sessionStorage.token=null
+        setToken(null)
+    }
 
 return (
     <AppBar position="static">
     <Toolbar style={{ background: "#FF9900" }}>
         <Box sx={{display:'flex'}}>
         <div style={{ marginRight: 20 }}>
-            <Link to="/" style={{ color: 'white', fontSize: 18, padding: 20, margin: 20 }}>
-                <a className="link" onClick={() => navigate('/')}>Shifts</a>
+            <Link to="/">
+                <a className="link" onClick={() => navigate('/')} style={{ color: 'black', fontWeight: 'bold' }}>Shifts</a>
             </Link>
         </div>
 
         <div style={{ marginRight: 20 }}>
-        <Link to="/CreateGig" style={{ color: 'white', fontSize: 18 }}>
-        <a className="link" onClick={() => navigate('/creategig')}>Create Gig</a>
+        <Link to="/CreateGig">
+        <a className="link" onClick={() => navigate('/creategig')} style={{ color: 'black', fontWeight: 'bold' }}>Create Gig</a>
         </Link>
         </div>
 
         <div style={{ marginRight: 20 }}>
-        <Link to="/Addlocation" style={{ color: 'white', fontSize: 18 }}>
-        <a className="link" onClick={() => navigate('/addlocation')}>Add Location</a>
+        <Link to="/Addlocation">
+        <a className="link" onClick={() => navigate('/addlocation')} style={{ color: 'black', fontWeight: 'bold' }}>Add Location</a>
         </Link>
         </div>
 
         <div style={{ marginRight: 20 }}>
-        <Link to="/RegisterEmployee" style={{ color: 'white', fontSize: 18 }}>
-        <a className="link" onClick={() => navigate('/registeremployee')}>Register Employee</a>
+        <Link to="/RegisterEmployee">
+        <a className="link" onClick={() => navigate('/registeremployee')} style={{ color: 'black', fontWeight: 'bold' }}>Register Associate</a>
         </Link>
         </div>
 
-        {/*CLEAR USER TOKEN*/}
-        <div style={{ marginRight: 20 }}>
-        <Link to="/RegisterEmployee" style={{ color: 'white', fontSize: 18 }}>
-        <a className="link" onClick={() => navigate('/registeremployee')}>Logout</a>
-        </Link>
+        <div style={{ marginRight: 20, position: 'absolute', right: 10 }}>
+        {/* <Link to="/Login" style={{ color: 'white', fontSize: 18 }}> */}
+        <a onClick={() => logout()} style={{ fontWeight: 'bold', color: 'black' }}>Logout</a>
+        {/* </Link> */}
         </div>
         </Box>
     </Toolbar>
