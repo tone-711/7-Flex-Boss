@@ -6,9 +6,9 @@ import { Server } from "socket.io";
 
 import getDB from "./services/data/provider.js";
 import users  from './services/data/user.js';
-import stores from './services/data/stores.js';
-import gigs  from './services/data/gig.js';
-import bookings  from './services/data/bookings.js';
+import stores from './services/data/store.js';
+import shifts  from './services/data/shift.js';
+import bookings  from './services/data/booking.js';
 
 import jwt from "jsonwebtoken";
 import Geocodio from "geocodio-library-node";
@@ -61,12 +61,6 @@ io.on("connection", async (socket) => {
   console.log("a user connected");
 
 
-  socket.on("get gigs", async () => {
-    const result = await users.getall();
-
-    socket.emit("get users response", result);
-  });
-
   socket.on("get users", async () => {
     const result = await users.getall();
 
@@ -117,44 +111,44 @@ io.on("connection", async (socket) => {
     }
   );
 
-  // endpoint get available gigs
-  socket.on("get available gigs", async () => {
-    const result = await gigs.getAvailable();
-    socket.emit("get available gigs response", result);
+  // endpoint get available shifts
+  socket.on("get available shifts", async () => {
+    const result = await shifts.getAvailable();
+    socket.emit("get available shifts response", result);
   });
-  // endpoint get gigs by store
-  socket.on("get gigs by store", async ( { storeId } ) => {
-    const result = await gigs.getByStore(storeId);
-    socket.emit("get gigs by store response", result);
+  // endpoint get shifts by store
+  socket.on("get shifts by store", async ( { storeId } ) => {
+    const result = await shifts.getByStore(storeId);
+    socket.emit("get shifts by store response", result);
   });
-  // endpoint create gig
-  socket.on("create gig", async ( { storeId, rate, startDate, endDate, availableCount, headCount } ) => {
-    const result = await gigs.create({ 
+  // endpoint create shift
+  socket.on("create shift", async ( { storeId, payRate, startDate, endDate, availableCount, headCount } ) => {
+    const result = await shifts.create({ 
       storeId:storeId, 
-      rate:rate, 
+      payRate:payRate, 
       startDate:startDate, 
       endDate:endDate, 
       availableCount:availableCount, 
       headCount:headCount 
     });
-    socket.emit("create gig response", result);
+    socket.emit("create shift response", result);
   });
-  // endpoint udpate gig
-  socket.on("update gig", async ( id, { storeId, rate, startDate, endDate, availableCount, headCount } ) => {
-    const result = await gigs.update(id, { 
+  // endpoint udpate shift
+  socket.on("update shift", async ( id, { storeId, payRate, startDate, endDate, availableCount, headCount } ) => {
+    const result = await shifts.update(id, { 
       storeId:storeId, 
-      rate:rate, 
+      payRate:payRate, 
       startDate:startDate, 
       endDate:endDate, 
       availableCount:availableCount, 
       headCount:headCount 
     });
-    socket.emit("update gig response", result);
+    socket.emit("update shift response", result);
   });
-  // endpoint delete gig
-  socket.on("delete gig", async ( id ) => {
-    const result = await gigs.delete(id);
-    socket.emit("delete gig response", result);
+  // endpoint delete shift
+  socket.on("delete shift", async ( id ) => {
+    const result = await shifts.delete(id);
+    socket.emit("delete shift response", result);
   });  
 
   
@@ -225,32 +219,22 @@ io.on("connection", async (socket) => {
     
   });
 
-  socket.on("book shift", async ({ username, gigId }) => {
+  socket.on("book shift", async ({ username, shiftId }) => {
     try {
-      const shift = DB.collection("shift");
-
-      const booking = DB.collection("booking");
-
-      const curShift = await shift.findOne({ _id: gigId });
+      const curShift = await shifts.get(shiftId);
 
       if (curShift) {
 
-      const result = await booking.insertOne({
-        storeId: storeId,
-        gigId: gigId,
-        startDate: shift.startDate,
-        endDate: shift.endDate,
+      const result = await bookings.create({
+        storeId: curShift.storeId,
+        shiftId: shiftId,
+        startDate: curShift.startDate,
+        endDate: curShift.endDate,
         username: username,
-        payRate: shift.payRate
+        payRate: curShift.payRate
       });
 
-      const query = { _id: id };
-      const update = {
-        $set: {
-          availableSlots: curShift.availableSlots - 1,
-        },
-      };
-      await shift.updateOne(query, update);
+      await shifts.update(shiftId, { availableSlots: curShift.availableSlots - 1 });
 
       console.log(result);
 
@@ -263,6 +247,7 @@ io.on("connection", async (socket) => {
         });
       }
     } catch (e) {
+      console.log(e);
       socket.emit("book shift response", {
         success: false,
         error: e,
@@ -272,9 +257,7 @@ io.on("connection", async (socket) => {
 
   socket.on("new shift", async ({ storeId, startDate, endDate, payRate = 40, headCount = 1 }) => {
     try {
-      const shift = DB.collection("shift");
-
-      const result = await shift.insertOne({
+      const result = await shifts.create({
         storeId: storeId,
         startDate: typeof startDate === "string" ? new Date(startDate) : startDate,
         endDate: typeof endDate === "string" ? new Date(endDate) : endDate,
@@ -296,6 +279,7 @@ io.on("connection", async (socket) => {
         });
       }
     } catch (e) {
+      console.log(e);
       socket.emit("new shift response", {
         success: false,
         error: e,
@@ -304,23 +288,18 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("get shifts", async ({getAll = false}) => {
-    const shift = DB.collection("shift");
-
     if (getAll === true) {
-
-      const shifts = await shift.find().toArray();
-
+      const results = await shifts.getAll();
       socket.emit("get shifts response", {
         success: true,
-        stores: shifts,
+        shifts: results,
       });
-
     } else {
-      const shifts = await shift.find({ availableSlots: { $gt: 0 } } ).toArray();
+      const results = await shifts.getAvailable();
 
       socket.emit("get shifts response", {
         success: true,
-        stores: shifts,
+        shifts: results,
       });
     }
   });
