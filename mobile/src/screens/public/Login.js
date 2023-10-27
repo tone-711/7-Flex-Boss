@@ -21,29 +21,24 @@ const Login = props => {
   const {socket} = useSocketIO();
   const mmkvStorage = useMmkv();
   const [mmkvToken, setMmkvToken] = mmkvStorage('token');
+  const [mmkuserName, setMmkvUserName] = mmkvStorage('username');
 
+  try {
   socket?.on('login response', ({success, token}) => {
     if (success === true) {
       toggleLoader(false);
+      setMmkvUserName(username);
       setUsername('');
       setPassword('');
       setMmkvToken(token);
       login(token);
     } else {
-      Alert.alert('Invalid Username or Password!');
+      console.log('Invalid Username or Password!');
     }
   });
-
-  React.useEffect(() => {
-    // const testBiometric = async () => {
-    //   //await SetUser('SomeUser', 'SomePassword');
-    //   const user = await GetUser();
-    //   console.log('bioUser', user);
-    //   await DeleteUser();
-    // };
-
-    // testBiometric();
-  }, []);
+}catch(err) {
+  console.log('err',err);
+}
 
   return (
     <>

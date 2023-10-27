@@ -52,7 +52,7 @@ const DATA = [
 
 const Item = ({item, onPress, backgroundColor, textColor}) => (
   <TouchableOpacity onPress={onPress} style={[styles.item, {backgroundColor}]}>
-    <Text style={[styles.title, {color: 'black'}]}>{item.title} - {item.location}</Text> 
+    <Text style={[styles.title, {color: 'black'}]}>{"STORE ID"} : {item.storeId} - {"Available Shifts"} : {item.availableSlots}</Text> 
   </TouchableOpacity>
 );
 
@@ -70,6 +70,7 @@ const AvailableShifts = props => {
     if (success === true) {
       console.log('shifts');
       setData(shifts);
+      console.log('data',data);
     } else {
       console.log('Error fetching Data');
     }
@@ -85,7 +86,7 @@ const AvailableShifts = props => {
 
   const renderItem = ({item}) => {
     const backgroundColor = item.id === selectedId ? '#CED0CE' : '#fcc494';
-    const color = item.id === selectedId ? 'white' : 'black';
+    const color = item?._id === selectedId ? 'white' : 'black';
 
     return (
       <Item
@@ -112,9 +113,9 @@ const AvailableShifts = props => {
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
-        data={shiftData ?? DATA}
+        data={data ?? DATA}
         renderItem={renderItem}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item._id}
         extraData={selectedId}
         ItemSeparatorComponent={this.renderSeparator}
       />
