@@ -175,23 +175,132 @@ io.on("connection", async (socket) => {
     }
   });
 
-  socket.on("chat message", (msg) => {
-    console.log("message: " + msg);
-    const msgFlags = msg.split(" ")[0];
+  socket.on("get user bookings", async ({username}) => {
+    const booking = DB.collection("booking");
+   
+      const bookings = await booking.find({ username: username } ).toArray();
 
-    if (msgFlags.startsWith("@ch:")) {
-      console.log("@ch:", msgFlags.substr(4), msg.substr(msgFlags.length));
-      io.to(msgFlags.substr(4)).emit(
-        "chat message",
-        msg.substr(msgFlags.length)
-      );
-    } else if (msgFlags[0] === "@") {
-      console.log("@", msgFlags.substr(1));
-      socket
-        .to(msgFlags.substr(1))
-        .emit("chat message", msg.substr(msgFlags.length));
+      socket.emit("get shifts response", {
+        success: true,
+        stores: bookings,
+      });
+    
+  });
+
+  socket.on("book shift", async ({ username, gigId }) => {
+    try {
+      const shift = DB.collection("shift");
+
+      const booking = DB.collection("booking");
+
+      const curShift = await shift.findOne({ _id: id });
+
+      if (curShift) {
+
+      const result = await booking.insertOne({
+        storeId: storeId,
+        gigId: gigId,
+        startDate: shift.startDate,
+        endDate: shift.endDate,
+        username: username,
+        payRate: shift.payRate
+      });
+
+      const query = { _id: id };
+      const update = {
+        $set: {
+          availableSlots: curShift.availableSlots - 1,
+        },
+      };
+      await shift.updateOne(query, update);
+
+      console.log(result);
+
+        socket.emit("book shift response", {
+          success: true
+        });
+      } else {
+        socket.emit("book shift response", {
+          success: false
+        });
+      }
+    } catch (e) {
+      socket.emit("book shift response", {
+        success: false,
+        error: e,
+      });
+    }
+  });
+
+  socket.on("new shift", async ({ storeId, startDate, endDate, headCount = 1, payRate = 40 }) => {
+    try {
+      const shift = DB.collection("shift");
+
+      const result = await shift.insertOne({
+        storeId: storeId,
+        startDate: typeof startDate === "string" ? new Date(startDate) : startDate,
+        endDate: typeof endDate === "string" ? new Date(endDate) : endDate,
+        headCount: headCount,
+        payRate: payRate,
+        availableSlots: headCount
+      });
+
+      console.log(result);
+
+      if (result.insertedId) {
+        socket.emit("new shift response", {
+          success: true,
+          gigId: result.insertedId,
+        });
+      } else {
+        socket.emit("new shift response", {
+          success: false
+        });
+      }
+    } catch (e) {
+      socket.emit("new shift response", {
+        success: false,
+        error: e,
+      });
+    }
+  });
+
+  socket.on("get shifts", async ({getAll = false}) => {
+    const shift = DB.collection("shift");
+
+    if (getAll === true) {
+
+      const shifts = await shift.find().toArray();
+
+      socket.emit("get shifts response", {
+        success: true,
+        stores: shifts,
+      });
+
     } else {
-      io.emit("chat message", msg);
+      const shifts = await shift.find({ availableSlots: { $gt: 0 } } ).toArray();
+
+      socket.emit("get shifts response", {
+        success: true,
+        stores: shifts,
+      });
+    }
+  });
+
+  socket.on("get shift by id", async (id) => {
+    const shift = DB.collection("shift");
+
+    const res = await shift.findOne({ _id: id });
+
+    if (res) {
+      socket.emit("get shift by id response", {
+        success: true,
+        shift: res,
+      });
+    } else {
+      socket.emit("get shift by id response", {
+        success: false,
+      });
     }
   });
 
