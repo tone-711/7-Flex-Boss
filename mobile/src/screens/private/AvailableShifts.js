@@ -77,10 +77,13 @@ const AvailableShifts = props => {
     </TouchableOpacity>
   );
 
-  const openNavigator = ({item}) => {
+  const openNavigator = (item) => {
+
+    console.log(item);
     socket?.emit('get location by id', { storeId: item?.storeId });
 
     socket?.on('get location by id response', ({success, store}) => {
+      console.log(store);
       if (success === true) {
         LaunchNavigator.navigate([store.latlng.lat, store.latlng.lng])
           .then(() => console.log("Launched navigator"))

@@ -39,6 +39,7 @@ const Index = () => {
     //   console.log(mmkvToken);
     // }
     async function connectSocketIO() {
+      console.log('yo');
       await connect();
     }
     connectSocketIO();
