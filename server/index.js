@@ -69,7 +69,14 @@ io.on("connection", async (socket) => {
 
   socket.on(
     "register user",
-    async ({ username, password, employeeId, email, mobilePhone, role = "manager" }) => {
+    async ({
+      username,
+      password,
+      employeeId,
+      email,
+      mobilePhone,
+      role = "manager",
+    }) => {
       const hash = await HashPW(password);
       const user = DB.collection("user");
 
@@ -205,7 +212,7 @@ io.on("connection", async (socket) => {
         $set: {
           storeId: storeId,
           address: address,
-          latlng: latlng.results[0].location
+          latlng: latlng.results[0].location,
         },
       };
       const options = { upsert: true };
@@ -233,17 +240,32 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("get all locations", async () => {
-      const store = DB.collection("store");
+    const store = DB.collection("store");
 
-      const stores = await store.find().toArray();;
+    const stores = await store.find().toArray();
 
-      socket.emit("get all locations response", {
-        success: true,
-        stores: stores
-      });
-
+    socket.emit("get all locations response", {
+      success: true,
+      stores: stores,
+    });
   });
 
+  socket.on("get location by id", async ({ storeId }) => {
+    const store = DB.collection("store");
+
+    const res = await store.findOne({ storeId: storeId });
+
+    if (res) {
+      socket.emit("get location by id response", {
+        success: true,
+        store: res,
+      });
+    } else {
+      socket.emit("get location by id response", {
+        success: false,
+      });
+    }
+  });
 
   socket.on("disconnect", async (reason) => {
     //await redisClient.del(socket.id);
