@@ -14,6 +14,8 @@ import jwt from "jsonwebtoken";
 import Geocodio from "geocodio-library-node";
 import "dotenv/config";
 
+const geocoder = new Geocodio(process.env.GEOCODIO_API_KEY);
+
 async function HashPW(password) {
   return new Promise((resolve, reject) => {
     // generate random 16 bytes long salt
