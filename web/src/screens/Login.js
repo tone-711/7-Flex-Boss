@@ -73,18 +73,16 @@ export default function Login() {
             Login
           </Button>
         )}
-
+<div style={{ position: 'absolute', bottom: 100 }}>
+<p style={{  fontSize: 16, color: 'black' }}>Don't have a login, sign up here!</p>
 <Button
             variant="contained"
-            style={{ width: 300, marginTop: 10, background: "#000000" }}
+            style={{ width: 300, marginTop: 10, background: "white", color: 'black' }}
             onClick={() => navigate('/register')}
           >
             Signup
           </Button>
-
- {/* <Link href="/Addlocation">
- <a className="link" onClick={() => navigate('/addlocation')}>Profile</a>
- </Link> */}
+          </div>
       </div>
     </div>
   );
