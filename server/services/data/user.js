@@ -15,7 +15,7 @@ export default {
         return await table.insertOne( { $set: set } );
     },
     update: async function(username, set) {
-        return await table.updateOne( { username: username }, { $set: set } );
+        return await table.updateOne( { username: username }, { $set: set }, { upsert: true } );
     },
     delete: async function(username) {
         return await table.deleteOne( { username: username }, { $set: set } );

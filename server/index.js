@@ -4,7 +4,6 @@ import express from "express";
 import cors from "cors";
 import { Server } from "socket.io";
 
-import getDB from "./services/data/provider.js";
 import users  from './services/data/user.js';
 import stores from './services/data/store.js';
 import shifts  from './services/data/shift.js';
@@ -80,22 +79,16 @@ io.on("connection", async (socket) => {
       role = "manager",
     }) => {
       const hash = await HashPW(password);
-      const user = DB.collection("user");
 
-      const query = { username: username };
-      const update = {
-        $set: {
-          username: username,
-          password: hash,
-          employeeId: employeeId,
-          email: email,
-          mobilePhone: mobilePhone,
-          socket: null,
-          role: role,
-        },
-      };
-      const options = { upsert: true };
-      const result = await user.updateOne(query, update, options);
+      const result = await users.update(username, {
+        username: username,
+        password: hash,
+        employeeId: employeeId,
+        email: email,
+        mobilePhone: mobilePhone,
+        socket: null,
+        role: role,
+      })
 
       console.log(result);
 
@@ -194,8 +187,6 @@ io.on("connection", async (socket) => {
   socket.on("refresh session", async ({ token }) => {
     // send a private message to the socket with the given it
 
-    // const user = DB.collection("user");
-
     try {
       const verifiedToken = await jwt.verify(token, process.env.JWT_SECRET);
 
@@ -271,7 +262,7 @@ io.on("connection", async (socket) => {
       if (result.insertedId) {
         socket.emit("new shift response", {
           success: true,
-          gigId: result.insertedId,
+          shiftId: result.insertedId,
         });
       } else {
         socket.emit("new shift response", {
@@ -304,15 +295,13 @@ io.on("connection", async (socket) => {
     }
   });
 
-  socket.on("get shift by id", async ({gigId}) => {
-    const shift = DB.collection("shift");
+  socket.on("get shift by id", async ({shiftId}) => {
+    const results = await shifts.get(shiftId);
 
-    const res = await shift.findOne({ _id: ObjectId(gigId) });
-
-    if (res) {
+    if (results) {
       socket.emit("get shift by id response", {
         success: true,
-        shift: res,
+        shift: results,
       });
     } else {
       socket.emit("get shift by id response", {
@@ -368,14 +357,12 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("get location by id", async ({ storeId }) => {
-    const store = DB.collection("store");
+    const results = await stores.get(storeId);
 
-    const res = await store.findOne({ storeId: storeId });
-
-    if (res) {
+    if (results) {
       socket.emit("get location by id response", {
         success: true,
-        store: res,
+        store: results,
       });
     } else {
       socket.emit("get location by id response", {
@@ -385,19 +372,7 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("disconnect", async (reason) => {
-    //await redisClient.del(socket.id);
-
-    // io.emit("connected users", connectedUsers);
-    const user = DB.collection("user");
-
-    const query = { socket: socket.id };
-    const update = {
-      $set: {
-        socket: null,
-      },
-    };
-    const result = await user.updateOne(query, update);
-
+    const result = await users.updateSocket(socket.id);
     console.log("a user disconnected", socket.id, result);
   });
 
