@@ -121,7 +121,7 @@ export default function RegisterEmployee() {
         !email ||
         !mobNumber ? null : (
           <Button
-          onClick={() => socket.emit("register user", { username: user, password: pass, employeeId: id, email: email, mobilePhone: mobNumber, role: "manager" })}
+          onClick={() => socket.emit("register user", { username: user, password: pass, employeeId: id, email: email, mobilePhone: mobNumber, role: "associate" })}
             variant="contained"
             style={{ width: 300, marginTop: 10, background: "#000000" }}
           >
