@@ -78,22 +78,16 @@ io.on("connection", async (socket) => {
       role = "manager",
     }) => {
       const hash = await HashPW(password);
-      const user = DB.collection("user");
 
-      const query = { username: username };
-      const update = {
-        $set: {
-          username: username,
-          password: hash,
-          employeeId: employeeId,
-          email: email,
-          mobilePhone: mobilePhone,
-          socket: null,
-          role: role,
-        },
-      };
-      const options = { upsert: true };
-      const result = await user.updateOne(query, update, options);
+      const result = await users.update(username, {
+        username: username,
+        password: hash,
+        employeeId: employeeId,
+        email: email,
+        mobilePhone: mobilePhone,
+        socket: null,
+        role: role,
+      })
 
       console.log(result);
 
@@ -366,14 +360,12 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("get location by id", async ({ storeId }) => {
-    const store = DB.collection("store");
+    const results = await stores.get(storeId);
 
-    const res = await store.findOne({ storeId: storeId });
-
-    if (res) {
+    if (results) {
       socket.emit("get location by id response", {
         success: true,
-        store: res,
+        store: results,
       });
     } else {
       socket.emit("get location by id response", {
