@@ -2,6 +2,7 @@ import "../style.css";
 import { useState } from "react";
 import Button from "@mui/material/Button";
 import { TextField } from "@mui/material";
+import useSocketIO from '../services/useSocketIO'
 
 export default function Register() {
   const [id, setId] = useState("");
@@ -10,10 +11,27 @@ export default function Register() {
   const [confirmPass, setConfirmPass] = useState("");
   const [email, setEmail] = useState("");
   const [mobNumber, setMobNumber] = useState("");
+  const { socket } = useSocketIO();
+  const [error, setError] = useState(null)
+  const [registered, setRegistered] = useState(false)
+
+  socket?.on("register user response", ({ success }) => {
+    if (success === true) {
+      setError(null)
+      setRegistered(true)
+    }
+    else {
+      setError('Try again')
+    }
+  });
 
   return (
     <div className="Container">
       <div className="Login" style={{ justifyContent: 'flex-start' }}>
+      {registered ? 
+        <p>Manager Registered!</p>
+        :
+        <>
         <h2>Sign Up</h2>
         <TextField
          value={id}
@@ -107,6 +125,8 @@ export default function Register() {
           }}
         />
 
+        {error ? <p style={{ color: '#ff0028' }}>{error}</p> : null}
+
         {!id ||
         !user ||
         !pass ||
@@ -114,12 +134,14 @@ export default function Register() {
         !email ||
         !mobNumber ? null : (
           <Button
+          onClick={() => socket.emit("register user", { username: user, password: pass, employeeId: id, email: email, mobilePhone: mobNumber, role: "manager" })}
             variant="contained"
             style={{ width: 300, marginTop: 10, background: "#000000" }}
           >
             Signup
           </Button>
         )}
+</>}
       </div>
     </div>
   );
