@@ -60,6 +60,7 @@ const Login = props => {
             <Text style={styles.inputLabel}>Password</Text>
             <TextInput
               value={password}
+              autoCapitalize="none"
               secureTextEntry={true}
               onChangeText={val => setPassword(val)}
               style={styles.input}
