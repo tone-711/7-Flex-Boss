@@ -10,7 +10,7 @@ const useSocketIO = () => {
   const {store} = useContext(MainContext);
 
   const connect = async () => {
-    console.log('socket conect');
+    console.log('socket conect', SIO_URL);
     const socket = await io.connect(SIO_URL);
     setSocketIO(socket);
     return socket;
