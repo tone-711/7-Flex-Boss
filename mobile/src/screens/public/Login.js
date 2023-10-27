@@ -35,14 +35,14 @@ const Login = props => {
   });
 
   React.useEffect(() => {
-    const testBiometric = async () => {
-      await SetUser('SomeUser', 'SomePassword');
-      const user = await GetUser();
-      console.log('bioUser', user);
-      await DeleteUser();
-    };
+    // const testBiometric = async () => {
+    //   //await SetUser('SomeUser', 'SomePassword');
+    //   const user = await GetUser();
+    //   console.log('bioUser', user);
+    //   await DeleteUser();
+    // };
 
-    testBiometric();
+    // testBiometric();
   }, []);
 
   return (
@@ -80,7 +80,7 @@ const Login = props => {
           mode="contained"
           onPress={() => {
             toggleLoader(true);
-            socket.emit('login', {username: username, password: password});
+            socket?.emit('login', {username: username, password: password});
           }}>
           Login
         </Button>
