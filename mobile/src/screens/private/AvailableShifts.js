@@ -73,24 +73,8 @@ const AvailableShifts = props => {
   const Item = ({item, onPress, backgroundColor, textColor}) => (
     <TouchableOpacity onPress={onPress} style={[styles.item, {backgroundColor}]}>
       <Text style={[styles.title, {color: 'black'}]}>{"STORE ID"} : {item.storeId} - {"Available Shifts"} : {item.availableSlots}</Text> 
-      <Button onPress={() => openNavigator(item) }>Navigate</Button>
     </TouchableOpacity>
   );
-
-  const openNavigator = (item) => {
-
-    console.log(item);
-    socket?.emit('get location by id', { storeId: item?.storeId });
-
-    socket?.on('get location by id response', ({success, store}) => {
-      console.log(store);
-      if (success === true) {
-        LaunchNavigator.navigate([store.latlng.lat, store.latlng.lng])
-          .then(() => console.log("Launched navigator"))
-          .catch((err) => console.error("Error launching navigator: "+err));
-      } 
-    });
-  };
 
   React.useEffect(() => {
     if(isFocused) {

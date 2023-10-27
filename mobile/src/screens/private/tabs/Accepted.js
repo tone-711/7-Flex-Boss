@@ -5,12 +5,13 @@ import {
   View,
   StyleSheet,
 } from 'react-native';
-import {Text} from 'react-native-paper';
+import {Text, Button} from 'react-native-paper';
 import {MemoContext} from '../../../services/MainMemo';
 import AvailableShifts from '../AvailableShifts';
 import { useIsFocused } from '@react-navigation/native';
 import useSocketIO from '../../../services/useSocketIO';
 import useMmkv from '../../../services/useMmkv';
+import LaunchNavigator from 'react-native-launch-navigator';
 
 const Accepted = props => {
   const {getShifts} = useContext(MemoContext);
@@ -39,8 +40,21 @@ const Accepted = props => {
   const Item = ({item, onPress, backgroundColor, textColor}) => (
     <TouchableOpacity onPress={onPress} style={[styles.item, {backgroundColor}]}>
       <Text style={[styles.title, {color: 'black'}]}>{"Accepted Shift at STORE ID"} : {item.storeId}</Text> 
+      <Button onPress={() => openNavigator(item) }>Navigate</Button>
     </TouchableOpacity>
   );
+
+  const openNavigator = (item) => {
+    socket?.emit('get location by id', { storeId: item?.storeId });
+
+    socket?.on('get location by id response', ({success, store}) => {
+      if (success === true) {
+        LaunchNavigator.navigate([store.latlng.lat, store.latlng.lng])
+          .then(() => console.log("Launched navigator"))
+          .catch((err) => console.error("Error launching navigator: "+err));
+      } 
+    });
+  };
 
 
   const renderItem = ({item}) => {
